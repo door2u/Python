@@ -60,20 +60,61 @@ def StriTo__Tupl(stri, cast = "f"):
 	return tuple(retu)
 
 # convert a LIST OF STRINGS into a list to tuples
-def StriListTo__Tupl(striList):
+# TODO: update
+"""
+def StriListTo__Tupl(striList, cast = "f"):
 	retu = []
 	a = 0
 	while a < len(striList):
-		retu.append(StriTo__Tupl(striList[a]))
+		retu.append(StriTo__Tupl(striList[a], cast = cast))
+		a += 1
+	return retu
+"""
+
+def StriListTo__Tupl(striList, cast = "f"):
+	retu = []
+	#striList = 
+	retuStri = ""
+	copy = False
+	a = 0
+	while a < len(striList):
+		if striList[a] == "(":
+			copy = True
+		if copy == True:
+			retuStri += striList[a]
+		if striList[a] == ")":
+			copy = False
+			retu.append(retuStri)
+			retuStri = ""
+		a += 1
+	a = 0
+	while a < len(retu):
+		retu[a] = StriTo__Tupl(retu[a], cast = cast)
 		a += 1
 	return retu
 
-# TODO: this is just list to string
+"""
+# TODO: this might not be needed if there aren't any scripts that depend on it
 def TuplListTo__Stri(list):
 	retu = []
 	for a in range(len(list)):
 		retu.append(str(list[a]))
 	return retu
+"""
+
+def TuplListTo__Stri(list, remoBrac = True):
+	retu = str(list)
+	if remoBrac == True:
+		retu = retu[1:len(retu) - 1]
+	return retu
+
+def StriListTo__Int_List(stri):
+	stri = stri.replace("[", "")
+	stri = stri.replace("]", "")
+	stri = stri.split(",")
+	for a in range(len(stri)):
+		stri[a] = int(stri[a])
+	return stri
 
 #######################
 
@@ -284,14 +325,22 @@ def DictTo__Line(dic_):
 # count
 # 2
 # returns {"height":10.0, "count":2}
-def LineTo__Dict(line):
+# TODO: conf
+def LineTo__Dict(line, conf = 1):
 	retu = {}
 	a = 0
 	while a < len(line):
-		typ_ = line[a]
+		if conf == 0:
+			typ_ = line[a + 2]
+		if conf == 1:
+			typ_ = line[a]
 		if Sub_Stri(typ_, 1, 4) != "list" and Sub_Stri(typ_, 1, 5) != "tuple":
-			key_ = line[a + 1]
-			valu = line[a + 2]
+			if conf == 0:
+				key_ = line[a]
+				valu = line[a + 1]
+			if conf == 1:
+				key_ = line[a + 1]
+				valu = line[a + 2]
 			if typ_ == "<class 'float'>":
 				valu = float(valu)
 			elif typ_ == "<class 'int'>":
