@@ -20,25 +20,42 @@ def BlenDireLink(blenDire = None):
 def Sele(name, dese = True):
 	import bpy
 	scen = bpy.context.scene
-	if dese == True:
-		bpy.ops.object.select_all(action='DESELECT')
-	scen.objects.active = scen.objects[name]
-	scen.objects[name].select = True
-	return scen.objects[name]
+	retu = None
+	if name in Objects():
+		retu = scen.objects[name]
+		if dese == True:
+			bpy.ops.object.select_all(action='DESELECT')
+		# TODO: is this the right cutoff
+		vers = bpy.app.version
+		if vers[0] >= 3 or (vers[0] == 2 and vers[1] >= 80):
+			bpy.context.view_layer.objects.active = scen.objects[name]
+			bpy.data.objects[name].select_set(True)
+		else:
+			scen.objects.active = scen.objects[name]
+			scen.objects[name].select = True
+	return retu
 
 # select an object by NAME from another scene by NAME
 def SeleOthe(objeName, scenName):
 	import bpy
 	scen = bpy.context.scene
 	for obje in scen.objects:
-		obje.select = False
+		vers = bpy.app.version
+		if vers[0] >= 3 or (vers[0] == 2 and vers[1] >= 80):
+			obje.select_set(False)
+		else:
+			obje.select = False
 	scen = bpy.data.scenes[scenName]	
 	# deselect all
 	for obje in scen.objects:
 		obje.select = False
 	# select object
 	scene.objects.active = scene.objects[objeName]
-	scene.objects[objeName].select = True
+	vers = bpy.app.version
+	if vers[0] >= 3 or (vers[0] == 2 and vers[1] >= 80):
+		scene.objects[objeName].select_set(True)
+	else:
+		scene.objects[objeName].select = True
 	return scene.objects[objeName]
 
 def SeleAll_(action = 'SELECT'):
@@ -54,9 +71,18 @@ def Pare(pare = ""):
 	import bpy
 	chil = bpy.context.object.name
 	Sele(pare)
-	bpy.data.objects[chil].select = True
+	vers = bpy.app.version
+	if vers[0] >= 3 or (vers[0] == 2 and vers[1] >= 80):
+		bpy.data.objects[chil].select_set(True)
+	else:
+		bpy.data.objects[chil].select = True
 	bpy.ops.object.parent_set(type = 'OBJECT', xmirror = False, keep_transform = True)
 	Sele(chil)
+
+def PareList(pare = "", pareList = []):
+	for chil in pareList:
+		Sele(chil)
+		Pare(pare)
 
 def PareClea():
 	import bpy
@@ -65,13 +91,17 @@ def PareClea():
 # select the first object, then call join, and pass the NAME of the second object. joined object inherits the name of the first object
 def Join(name):
 	import bpy
-	bpy.data.objects[name].select = True
+	vers = bpy.app.version
+	if vers[0] >= 3 or (vers[0] == 2 and vers[1] >= 80):
+		bpy.data.objects[name].select_set(True)
+	else:
+		bpy.data.objects[name].select = True
 	bpy.ops.object.join()
 
 # duplicate the selected object
 def Dupl():
 	import bpy
-	bpy.ops.object.duplicate_move(OBJECT_OT_duplicate={"linked":False, "mode":'TRANSLATION'}, TRANSFORM_OT_translate={"value":(0, 0, 0), "constraint_axis":(False, False, False), "constraint_orientation":'GLOBAL', "mirror":False, "proportional":'DISABLED', "proportional_edit_falloff":'SMOOTH', "proportional_size":1, "snap":False, "snap_target":'CLOSEST', "snap_point":(0, 0, 0), "snap_align":False, "snap_normal":(0, 0, 0), "gpencil_strokes":False, "texture_space":False, "remove_on_cancel":False, "release_confirm":False})
+	bpy.ops.object.duplicate_move()
 
 # delete the selected object
 def Dele():
@@ -85,7 +115,13 @@ def Dele():
 # scale selected object by SCAL
 def Scal(scal, proportional_size = 1.0):
 	import bpy
-	bpy.ops.transform.resize(value=(scal[0], scal[1], scal[2]), constraint_axis=(scal[0] != 1.0, scal[1] != 1.0, scal[2] != 1.0), constraint_orientation='GLOBAL', mirror=False, proportional='DISABLED', proportional_edit_falloff='SMOOTH', proportional_size = proportional_size)
+	value = (scal[0], scal[1], scal[2])
+	constraint_axis = (scal[0] != 1.0, scal[1] != 1.0, scal[2] != 1.0)
+	vers = bpy.app.version
+	if vers[0] >= 3 or (vers[0] == 2 and vers[1] >= 80):
+		bpy.ops.transform.resize(value = value, constraint_axis = constraint_axis, orient_type = 'GLOBAL')
+	else:
+		bpy.ops.transform.resize(value = value, constraint_axis = constraint_axis, constraint_orientation = 'GLOBAL')
 
 # rotate the selected object by ROTA. set loca to TRUE for a local rotation. set PIVOT to CURSOR to translate the object around the z-axis of the cursor
 def Rota(rota = (0.0, 0.0, 0.0), loca = False, pivo = ""):
@@ -94,9 +130,15 @@ def Rota(rota = (0.0, 0.0, 0.0), loca = False, pivo = ""):
 	cons = 'GLOBAL'
 	if loca == True:
 		cons = 'LOCAL'
-	bpy.ops.transform.rotate(value = math.radians(rota[0]), axis=(1, 0, 0), constraint_axis = (True, False, False), constraint_orientation = cons)
-	bpy.ops.transform.rotate(value = math.radians(rota[1]), axis=(0, 1, 0), constraint_axis = (False, True, False), constraint_orientation = cons)
-	bpy.ops.transform.rotate(value = math.radians(rota[2]), axis=(0, 0, 1), constraint_axis = (False, False, True), constraint_orientation = cons)
+	vers = bpy.app.version
+	if vers[0] >= 3 or (vers[0] == 2 and vers[1] >= 80):
+		bpy.ops.transform.rotate(value = math.radians(rota[0]), orient_axis = 'X', constraint_axis = (True, False, False), orient_type = cons)
+		bpy.ops.transform.rotate(value = math.radians(rota[1]), orient_axis = 'Y', constraint_axis = (False, True, False), orient_type = cons)
+		bpy.ops.transform.rotate(value = math.radians(rota[2]), orient_axis = 'Z', constraint_axis = (False, False, True), orient_type = cons)
+	else:
+		bpy.ops.transform.rotate(value = math.radians(rota[0]), axis = (1, 0, 0), constraint_axis = (True, False, False), constraint_orientation = cons)
+		bpy.ops.transform.rotate(value = math.radians(rota[1]), axis = (0, 1, 0), constraint_axis = (False, True, False), constraint_orientation = cons)
+		bpy.ops.transform.rotate(value = math.radians(rota[2]), axis = (0, 0, 1), constraint_axis = (False, False, True), constraint_orientation = cons)
 	# pivot in z
 	if pivo == "CURSOR":
 		x = bpy.context.object.location[0] - bpy.context.scene.cursor_location[0]
@@ -173,22 +215,45 @@ def Conv():
 # set the cursor to a LOCATION
 def Curs(loca):
 	import bpy
-	bpy.context.scene.cursor_location = loca
+	vers = bpy.app.version
+	if vers[0] >= 3 or (vers[0] == 2 and vers[1] >= 80):
+		bpy.context.scene.cursor.location = loca
+	else:
+		bpy.context.scene.cursor_location = loca
 
 def CursRead():
 	import bpy
-	return tuple(bpy.context.scene.cursor_location)
+	retu = None
+	vers = bpy.app.version
+	if vers[0] >= 3 or (vers[0] == 2 and vers[1] >= 80):
+		retu = tuple(bpy.context.scene.cursor.location)
+	else:
+		retu = tuple(bpy.context.scene.cursor_location)
+	return retu
 
 # cursor to selected
-def CursTo__Sele(all_ = False):
+def CursTo__Sele(edit = False, all_ = False):
 	import bpy
 	Math = MathLink()
 	if all_ == False:
-		x, y, z = LocaRead()
+		if edit == False:
+			x, y, z = LocaRead()
+		else:
+			aver = VertListSele()
+			aver = VertLoca(aver)
+			x, y, z = Math.VectAver(aver)
 	else:
 		aver = []
 		for obje in bpy.context.scene.objects:
-			if obje.select == True:
+			sele = False
+			vers = bpy.app.version
+			if vers[0] >= 3 or (vers[0] == 2 and vers[1] >= 80):
+				if obje.select_get() == True:
+					sele = True
+			else:
+				if obje.select == True:
+					sele = True
+			if sele == True:
 				aver.append(tuple(obje.location))
 		x, y, z = Math.VectAver(aver)
 	Curs((x, y, z))
@@ -262,6 +327,9 @@ def VertSele(vert):
 	import bpy
 	# backup current context
 	name = bpy.context.object.name
+	mode = bpy.context.tool_settings.mesh_select_mode
+	# TODO: where else should this be implemented? if a function doesn't that uses edit_mode, check mesh_select_mode
+	bpy.context.tool_settings.mesh_select_mode = (True, False, False)
 	# create a new vertex group and add the vertices in the passed list to the new group
 	VertGrou("temp", vert)
 	# reselect the object
@@ -272,6 +340,8 @@ def VertSele(vert):
 	VertGrouSele("temp")
 	# delete the group
 	bpy.ops.object.vertex_group_remove()
+	# restore select mode
+	bpy.context.tool_settings.mesh_select_mode = mode
 
 # selected all the vertices of a selected object
 def VertSeleAll_():
@@ -304,11 +374,20 @@ def PolyDele():
 	bpy.ops.mesh.delete(type = 'FACE')
 	Edit()
 
-def VertGrou(name, lis_, weig = 1.0):
+def VertGrou(name, lis_ = [], weig = 1.0):
 	import bpy
 	bpy.ops.object.vertex_group_add()
-	bpy.context.object.vertex_groups[len(bpy.context.object.vertex_groups) - 1].name = name
-	bpy.context.object.vertex_groups[name].add(lis_, weig, type='ADD')
+	grouNumb = -1
+	for a in range(len(bpy.context.object.vertex_groups)):
+		grouName = bpy.context.object.vertex_groups[a].name
+		# TODO:
+		# where else is this needed
+		grouName = grouName.split(".")
+		if len(grouName) > 0:
+			if grouName[0] == 'Group':
+				grouNumb = a
+	bpy.context.object.vertex_groups[grouNumb].add(lis_, weig, type = 'ADD')
+	bpy.context.object.vertex_groups[grouNumb].name = name
 
 def VertGrouSele(name):
 	import bpy
@@ -340,6 +419,18 @@ def PathShor(star, fini):
 		a += 1
 	if coun < 2:
 		VertSele([star, fini])
+
+def Loop():
+	import bpy
+	Edit()
+	bpy.ops.mesh.loop_multi_select()
+	Edit()
+
+def Regi():
+	import bpy
+	Edit()
+	bpy.ops.mesh.loop_to_region()
+	Edit()
 
 #############################################
 
@@ -619,6 +710,13 @@ def SpliMate(mate, dele = True):
 					a = -1
 			a += 1
 
+# purge unused materials
+def MatePurgScen():
+	import bpy
+	for mate in bpy.data.materials:
+		if mate.users == 0:
+			mate.user_clear()
+
 #############################################
 
 # CURVE
@@ -798,6 +896,1316 @@ def CharAlig(name = ""):
 		Sele(tip_)
 		Loca((loca[0], loca[1], bpy.context.object.location[2]))
 		a += 1
+
+#############################################
+
+# RIGGING / SKINNING
+
+# example usage:
+
+# charName = "char"
+# RIGGING / SKINNING
+# spinCoun = 3
+# shouCoun = 1
+# hip_Coun = 1
+# rig_List = Rig_Read()
+# rig_List, bra1List, bra2List, bra3List, bra4List, bra5List, locaList, switList, regiList = Rig_List(rig_List, spinCoun = spinCoun, shouCoun = shouCoun, hip_Coun = hip_Coun)
+# make markers
+# MarkCrea(rig_List, locaList, charName + "." + "body", charName = charName)
+# align markers
+# Alig(bra1List, charName = charName)
+# Alig(bra2List, aligInde = 1, charName = charName)
+# Alig(bra3List, aligInde = 1, charName = charName)
+# MarkRefl(rig_List, charName = charName)
+# create armature
+# Rig_(charName + "." + "body", rig_List, bra1List, charName = charName, spinCoun = spinCoun, shouCoun = shouCoun, hip_Coun = hip_Coun)
+# Rig_(charName + "." + "body", rig_List, bra2List, charName = charName, spinCoun = spinCoun, shouCoun = shouCoun, hip_Coun = hip_Coun)
+# Rig_(charName + "." + "body", rig_List, bra3List, charName = charName, spinCoun = spinCoun, shouCoun = shouCoun, hip_Coun = hip_Coun)
+# Rig_(charName + "." + "body", rig_List, bra4List, charName = charName, spinCoun = spinCoun, shouCoun = shouCoun, hip_Coun = hip_Coun)
+# Rig_(charName + "." + "body", rig_List, bra5List, charName = charName, spinCoun = spinCoun, shouCoun = shouCoun, hip_Coun = hip_Coun)
+# BoneRollRese()
+# BoneRotaMode()
+# apply mirror
+# parent mesh to armature (and skin)
+# Blen.Sele(charName + "." + "body")
+# ArmaVolu()
+# skin extra
+# SPLIT MESH INTO SEPARATE "BONES"
+# use / rename markers created above
+# spliList, switList, pareDict, flipList = SpliRead(charName = charName)
+# make switch list
+# test individual loops
+# inde = 0
+# mark = MarkRead(rig_List, spliList[inde], charName = charName)
+# LoopNear(charName + "." + "body", mark, swit = switList[inde])
+# back up loops to a file
+# loopList = LoopList(charName + "." + "body", spliList, rig_List, switList, charName = charName)
+# LoopListWrit(loopList)
+# loopList = LoopListRead()
+# split mesh
+# MeshSpli(charName + "." + "body", spliList, loopList, rig_List, flipList, charName = charName)
+# parent "bones"
+# for key_ in pareDict:
+#	Blen.Sele(key_)
+#	Blen.Pare(pareDict[key_])
+# VERTEX GROUPS
+# make regions list ("s", "f", [0, 1, 2], None)
+# test individual vertex groups
+# inde = 0
+# LoopRegi(charName + "." + "body", inde, rig_List, switList, typ_ = regiList[inde], charName = charName)
+# create vertex groups
+# SkinAll_(name + "." + "body", rig_List, switList, regiList, charName = charName, pref = pref)
+# OTHER FUNCTIONS
+# backup / restore vertex positions
+# VertBack()
+# VertRest()
+# backup / restore vertex weights
+# WeigBack()
+# WeigRest()
+
+def BoneNameSpli(boneName):
+	retu = []
+	boneName = boneName.split(".")
+	inst = True
+	if boneName[len(boneName) - 1] == "l" or boneName[len(boneName) - 1] == "m" or boneName[len(boneName) - 1] == "r":
+		inst = False
+	nameInde = 0
+	prefInde = 1
+	indeInde = 2
+	boneInde = 3
+	sideInde = 4
+	instInde = 5
+	if inst == False:
+		instInde = -1
+	if len(boneName) < 4 or (len(boneName) == 4 and inst == True):
+		nameInde = -2
+		prefInde = -2
+	if len(boneName) == 4 and inst == False:
+		indeInde = -2
+		instInde = -2
+	if len(boneName) == 5 and inst == True:
+		indeInde = -1
+		instInde = 4
+	if len(boneName) == 4 and inst == False:
+		boneInde = 2
+		sideInde = 3
+	if (len(boneName) == 4 and inst == True) or (len(boneName) == 3 and inst == False):
+		indeInde = 0
+		boneInde = 1
+		sideInde = 2
+		if len(boneName) == 4:
+			instInde = 3
+	if (len(boneName) == 3 and inst == True) or len(boneName) == 2:
+		indeInde = -1
+		boneInde = 0
+		sideInde = 1
+		if len(boneName) == 3:
+			instInde = 2
+	if nameInde != -2:
+		retu.append(boneName[nameInde])
+	if prefInde != -2:
+		retu.append(boneName[prefInde])
+	if indeInde != -2:
+		if indeInde == -1:
+			retu.append("-1")
+		else:
+			retu.append(boneName[indeInde])
+	retu.append(boneName[boneInde])
+	retu.append(boneName[sideInde])
+	if instInde != -2:
+		if instInde == -1:
+			retu.append("-1")
+		else:
+			retu.append(boneName[instInde])
+	return retu
+
+# concatenate strings with a period if the string aren't empty
+def Conc(conc, stri = "", sepa = ".", empt = ""):
+	# restore defaults if sepa or empt are None (so that defaults don't have to be listed again in ConcList)
+	# TODO: probably a better way to do this
+	if sepa == None:
+		sepa = "."
+	if empt == None:
+		empt = ""
+	if conc != empt:
+		if stri != "":
+			stri += sepa
+		stri += conc
+	return stri
+
+# concatenate a list of strings
+# TODO: this could maybe be a generic function
+def ConcList(concList, stri = "", sepaList = [], emptList = []):
+	for a in range(len(concList)):
+		# TODO: what if a user wanted to pass None
+		sepa = None
+		if sepaList != []:
+			sepa = sepaList[a]
+		empt = None
+		if emptList != []:
+			empt = emptList[a]
+		stri = Conc(concList[a], stri = stri, sepa = sepa, empt = empt)
+	return stri
+
+def Rig_Read(conf = 0):
+	Pyth = PythLink()
+	retu = []
+	if type(conf) == int:
+		if conf == 0:
+			retu.append("spin.m.000, spin.m.001, spin.m.000, (0.0,0.0,1.0)")
+			retu.append("spin.m.001, spin.m.002, spin.m.001, (0.0,0.0,1.1)")
+			retu.append("spin.m.002, neck.m, spin.m.002, (0.0,0.0,1.6)")
+			retu.append("neck.m, head.m, neck.m, (0.0,0.0,1.65)")
+			retu.append("head.m, top_.m, head.m, (0.0,0.0,1.7)")
+			retu.append("top_.m, None, top_.m, (0.0,0.0,1.8)")
+			retu.append("")
+			# TODO: new branches are extruded from the head
+			retu.append("spin.m.002, shou.l, clav.l, None")
+			retu.append("shou.l, elbo.l, shou.l, (0.0,0.21,1.55)")
+			retu.append("elbo.l, wris.l, elbo.l, (0.0,0.21,1.2)")
+			retu.append("wris.l, hand.l, wris.l, (0.0,0.21,1.0)")
+			retu.append("hand.l, None, hand.l, (0.0,0.21,0.9)")
+			retu.append("")
+			retu.append("spin.m.000, hip_.l, pelv.l, None")
+			retu.append("hip_.l, knee.l, hip_.l, (0.0,0.15,1.05)")
+			retu.append("knee.l, ankl.l, knee.l, (0.0,0.15,0.7)")
+			retu.append("ankl.l, foot.l, ankl.l, (0.0,0.15,0.15)")
+			retu.append("foot.l, None, foot.l, (0.0,0.15,0.0)")
+			retu.append("")
+			retu.append("spin.m.002, shou.r, clav.r, None")
+			retu.append("shou.r, elbo.r, shou.r, (0.0,-0.21,1.55)")
+			retu.append("elbo.r, wris.r, elbo.r, (0.0,-0.21,1.2)")
+			retu.append("wris.r, hand.r, wris.r, (0.0,-0.21,1.0)")
+			retu.append("hand.r, None, hand.r, (0.0,-0.21,0.9)")
+			retu.append("")
+			retu.append("spin.m.000, hip_.r, pelv.r, None")
+			retu.append("hip_.r, knee.r, hip_.r, (0.0,-0.15,1.05)")
+			retu.append("knee.r, ankl.r, knee.r, (0.0,-0.15,0.7)")
+			retu.append("ankl.r, foot.r, ankl.r, (0.0,-0.15,0.15)")
+			retu.append("foot.r, None, foot.r, (0.0,-0.15,0.0)")
+		# fingers
+		elif conf == 1:
+			retu.append("spin.m.000, spin.m.001, spin.m.000, (0.0,0.0,1.0)")
+			retu.append("spin.m.001, spin.m.002, spin.m.001, (0.0,0.0,1.1)")
+			retu.append("spin.m.002, neck.m, spin.m.002, (0.0,0.0,1.6)")
+			retu.append("neck.m, head.m, neck.m, (0.0,0.0,1.65)")
+			retu.append("head.m, top_.m, head.m, (0.0,0.0,1.7)")
+			retu.append("top_.m, None, top_.m, (0.0,0.0,1.8)")
+			retu.append("")
+			retu.append("spin.m.002, shou.l, clav.l, None")
+			retu.append("shou.l, elbo.l, shou.l, (0.0,0.21,1.55)")
+			retu.append("elbo.l, wris.l, elbo.l, (0.0,0.21,1.2)")
+			retu.append("wris.l, hand.l, wris.l, (0.0,0.21,1.0)")
+			retu.append("thum.l.000, thum.l.001, thum.l.000, (0.04,0.21,0.98)")
+			retu.append("thum.l.001, thum.l.002, thum.l.001, (0.04,0.21,0.96)")
+			retu.append("thum.l.002, thum.l.003, thum.l.002, (0.04,0.21,0.94)")
+			retu.append("thum.l.003, None, thum.l.003, (0.04,0.21,0.92)")
+			retu.append("")
+			retu.append("inde.l.000, inde.l.001, inde.l.000, (0.02,0.21,0.96)")
+			retu.append("inde.l.001, inde.l.002, inde.l.001, (0.02,0.21,0.94)")
+			retu.append("inde.l.002, inde.l.003, inde.l.002, (0.02,0.21,0.92)")
+			retu.append("inde.l.003, None, inde.l.003, (0.02,0.21,0.9)")
+			retu.append("")
+			retu.append("midd.l.000, midd.l.001, midd.l.000, (0.0,0.21,0.96)")
+			retu.append("midd.l.001, midd.l.002, midd.l.001, (0.0,0.21,0.94)")
+			retu.append("midd.l.002, midd.l.003, midd.l.002, (0.0,0.21,0.92)")
+			retu.append("midd.l.003, None, midd.l.003, (0.0,0.21,0.9)")
+			retu.append("")
+			retu.append("ring.l.000, ring.l.001, ring.l.000, (-0.02,0.21,0.96)")
+			retu.append("ring.l.001, ring.l.002, ring.l.001, (-0.02,0.21,0.94)")
+			retu.append("ring.l.002, ring.l.003, ring.l.002, (-0.02,0.21,0.92)")
+			retu.append("ring.l.003, None, ring.l.003, (-0.02,0.21,0.9)")
+			retu.append("")
+			retu.append("pink.l.000, pink.l.001, pink.l.000, (-0.04,0.21,0.96)")
+			retu.append("pink.l.001, pink.l.002, pink.l.001, (-0.04,0.21,0.94)")
+			retu.append("pink.l.002, pink.l.003, pink.l.002, (-0.04,0.21,0.92)")
+			retu.append("pink.l.003, None, pink.l.003, (-0.04,0.21,0.9)")
+			retu.append("")
+			retu.append("spin.m.000, hip_.l, pelv.l, None")
+			retu.append("hip_.l, knee.l, hip_.l, (0.0,0.15,1.05)")
+			retu.append("knee.l, ankl.l, knee.l, (0.0,0.15,0.7)")
+			retu.append("ankl.l, foot.l, ankl.l, (0.0,0.15,0.15)")
+			retu.append("foot.l, None, foot.l, (0.0,0.15,0.0)")
+			retu.append("")
+			retu.append("spin.m.002, shou.r, clav.r, None")
+			retu.append("shou.r, elbo.r, shou.r, (0.0,0.21,1.55)")
+			retu.append("elbo.r, wris.r, elbo.r, (0.0,0.21,1.2)")
+			retu.append("wris.r, hand.r, wris.r, (0.0,0.21,1.0)")
+			retu.append("thum.r.000, thum.r.001, thum.r.000, (0.04,0.21,0.98)")
+			retu.append("thum.r.001, thum.r.002, thum.r.001, (0.04,0.21,0.96)")
+			retu.append("thum.r.002, thum.r.003, thum.r.002, (0.04,0.21,0.94)")
+			retu.append("thum.r.003, None, thum.r.003, (0.04,0.21,0.92)")
+			retu.append("")
+			retu.append("inde.r.000, inde.r.001, inde.r.000, (0.02,0.21,0.96)")
+			retu.append("inde.r.001, inde.r.002, inde.r.001, (0.02,0.21,0.94)")
+			retu.append("inde.r.002, inde.r.003, inde.r.002, (0.02,0.21,0.92)")
+			retu.append("inde.r.003, None, inde.r.003, (0.02,0.21,0.9)")
+			retu.append("")
+			retu.append("midd.r.000, midd.r.001, midd.r.000, (0.0,0.21,0.96)")
+			retu.append("midd.r.001, midd.r.002, midd.r.001, (0.0,0.21,0.94)")
+			retu.append("midd.r.002, midd.r.003, midd.r.002, (0.0,0.21,0.92)")
+			retu.append("midd.r.003, None, midd.r.003, (0.0,0.21,0.9)")
+			retu.append("")
+			retu.append("ring.r.000, ring.r.001, ring.r.000, (-0.02,0.21,0.96)")
+			retu.append("ring.r.001, ring.r.002, ring.r.001, (-0.02,0.21,0.94)")
+			retu.append("ring.r.002, ring.r.003, ring.r.002, (-0.02,0.21,0.92)")
+			retu.append("ring.r.003, None, ring.r.003, (-0.02,0.21,0.9)")
+			retu.append("")
+			retu.append("pink.r.000, pink.r.001, pink.r.000, (-0.04,0.21,0.96)")
+			retu.append("pink.r.001, pink.r.002, pink.r.001, (-0.04,0.21,0.94)")
+			retu.append("pink.r.002, pink.r.003, pink.r.002, (-0.04,0.21,0.92)")
+			retu.append("pink.r.003, None, pink.r.003, (-0.04,0.21,0.9)")
+			retu.append("")
+			retu.append("spin.m.000, hip_.r, pelv.r, None")
+			retu.append("hip_.r, knee.r, hip_.r, (0.0,0.15,1.05)")
+			retu.append("knee.r, ankl.r, knee.r, (0.0,0.15,0.7)")
+			retu.append("ankl.r, foot.r, ankl.r, (0.0,0.15,0.15)")
+			retu.append("foot.r, None, foot.r, (0.0,0.15,0.0)")
+	elif type(conf) == str:
+		retu = Pyth.FileTo__Line(conf)
+	return retu
+
+# faci - assumes the character is facing the positive x axis so that the z rotation of the character is 0 degrees by default in the x/y plane. to face the rig towards a different direction, pass, "-y", "+y", or "-x"
+# TODO: this function assumes the armature has a certain structure
+def Rig_List(rig_List, spinCoun = 3, shouCoun = 1, hip_Coun = 1, use_Inde = True, faci = "+x"):
+	Pyth = PythLink()
+	def Inde(name, markCoun = -1, use_Inde = use_Inde):
+		retu = ""
+		if use_Inde == True:
+			retu = Pad_(markCoun) + "."
+		retu += name
+		return retu
+	spinMini = 3
+	shouMini = 1
+	hip_Mini = 1
+	if spinCoun < spinMini:
+		spinCoun = spinMini
+	if shouCoun < shouMini:
+		shouCoun = shouMini
+	if hip_Coun < hip_Mini:
+		hip_Coun = hip_Mini
+	spinCuttLowe = 1
+	shouCuttLowe = 0
+	hip_CuttLowe = 0
+	spinCuttUppeDiff = 1
+	shouCuttUppeDiff = 0
+	hip_CuttUppeDiff = 0
+	markCoun = 0
+	retu = []
+	bran = []
+	locaList = []
+	spinInst = 0
+	shouInst = 0
+	hip_Inst = 0
+	spinBoneEnd_ = "spin" + "." + "m" + "." + Pad_(spinCoun - 1)
+	shouBoneEnd_ = "elbo"
+	hip_BoneEnd_ = "knee"
+	# if new bones are added to the spine, update the connections loaded from Rig_Read()
+	spinShif = [spinCuttLowe, 0]
+	shouShif = [shouCuttLowe, 0]
+	hip_Shif = [hip_CuttLowe, 0]
+	shif = []
+	a = 0
+	while a < len(rig_List):
+		if  rig_List[a] == "":
+			retu.append(bran)
+			bran = []
+			# TODO: reset spinInst and add a way to check if a spine bone is the start of a new branch
+			shouInst = 0
+			hip_Inst = 0
+			shouShif = [shouCuttLowe, 0]
+			hip_Shif = [hip_CuttLowe, 0]
+		else:
+			entr =  rig_List[a].split(", ")
+			name = entr[0]
+			inde, bone, side, inst = BoneNameSpli(name)
+			boneHead = ""
+			boneTail = ""
+			boneName = ""
+			boneLoca = None
+			if (bone == "spin" and spinCoun > spinMini and spinInst < spinCoun) or (bone == "shou" and shouCoun > shouMini and shouInst < shouCoun) or (bone == "hip_" and hip_Coun > hip_Mini and hip_Inst < hip_Coun):
+				if bone == "spin":
+					coun = spinCoun
+					inst = spinInst
+					cuttLowe = spinCuttLowe
+					cuttUppe = coun - spinCuttUppeDiff
+					boneEnd_ = spinBoneEnd_
+					shif = spinShif
+				elif bone == "shou":
+					coun = shouCoun
+					inst = shouInst
+					cuttLowe = shouCuttLowe
+					cuttUppe = coun - shouCuttUppeDiff
+					boneEnd_ = shouBoneEnd_ + "." + side
+					shif = shouShif
+				elif bone == "hip_":
+					coun = hip_Coun
+					inst = hip_Inst
+					cuttLowe = hip_CuttLowe
+					cuttUppe = coun - hip_CuttUppeDiff
+					boneEnd_ = hip_BoneEnd_ + "." + side
+					shif = hip_Shif
+				if inst == cuttLowe:
+					star =  rig_List[a]
+					star = star.split(", ")
+					star = Pyth.StriTo__Tupl(star[3])
+					end_ =  rig_List[a + 1]
+					end_ = end_.split(", ")
+					end_ = Pyth.StriTo__Tupl(end_[3])
+				cuttDiff = cuttUppe - cuttLowe
+				if inst < cuttLowe or inst == cuttDiff:
+					inde, bone, side, boneInst = BoneNameSpli(entr[0])
+					if inst > cuttLowe:
+						inst = shif[0] + shif[1]
+					boneHead = Inde(bone + "." + side + "." + Pad_(inst), markCoun)
+					boneTail = Inde(entr[1], markCoun + 1)
+					boneName = boneHead
+					bran.append([boneHead, boneTail, boneName])
+					loca = Pyth.StriTo__Tupl(entr[3])
+					locaList.append(loca)
+					inst += 1
+					markCoun += 1
+				else:
+					# create extra (in-between) bones
+					betwInst = shif[0] + shif[1]
+					inst += 1
+					while betwInst < cuttUppe:
+						boneHead = bone + "." + side + "." + Pad_(betwInst)
+						boneHead = Inde(boneHead, markCoun)
+						if betwInst < cuttUppe - 1:
+							boneTail = bone + "." + side + "." + Pad_(betwInst + 1)
+						else:
+							boneTail = boneEnd_
+						boneTail = Inde(boneTail, markCoun + 1)
+						bran.append([boneHead, boneTail, boneHead])
+						incr = shif[1] / cuttDiff
+						heig = star[2] - star[2] * incr + end_[2] * incr
+						loca = (star[0], star[1], heig)
+						locaList.append(loca)
+						markCoun += 1
+						shif[1] += 1
+						betwInst = shif[0] + shif[1]
+				if bone == "spin":
+					spinInst = inst
+				elif bone == "shou":
+					shouInst = inst
+				elif bone == "hip_":
+					hip_Inst = inst
+			else:
+				if bone == "spin":
+					cuttLowe = spinCuttLowe
+					shif = spinShif
+				elif bone == "shou":
+					cuttLowe = shouCuttLowe
+					shif = shouShif
+				elif bone == "hip_":
+					cuttLowe = hip_CuttLowe
+					shif = hip_Shif
+				loca = entr[3]
+				if loca != "None":
+					boneHead = bone + "." + side
+					if int(inst) > shif[0]:
+						inst = int(inst) + shif[1]
+						inst = Pad_(inst)
+						boneHead = ConcList([inst], stri = boneHead)
+						shif[1] += 1
+					else:
+						boneHead = ConcList([inst], stri = boneHead, emptList = ["-1"])
+					boneHead = Inde(name, markCoun)
+					name = entr[1]
+					if name != "None":
+						boneTail = Inde(name, markCoun + 1)
+					else:
+						boneTail = "None"
+					boneName = boneHead
+					loca = Pyth.StriTo__Tupl(loca)
+					locaList.append(loca)
+					if bone == "spin":
+						spinShif = [shif[0], shif[1]]
+					elif bone == "shou":
+						shouShif = [shif[0], shif[1]]
+					elif bone == "hip_":
+						hip_Shif = [shif[0], shif[1]]
+				else:
+					# find head name
+					inde, bone, side, inst = BoneNameSpli(entr[0])
+					brea = False
+					for b in range(len(retu)):
+						for c in range(len(retu[b])):
+							indeComp, boneComp, sideComp, instComp = BoneNameSpli(retu[b][c][0])
+							if int(inst) >= shif[0]:
+								inst = shif[0] + shif[1]
+								inst = Pad_(inst)
+							if bone == boneComp and side == sideComp and inst == instComp:
+								boneHead = ConcList([boneComp, sideComp, instComp], emptList = ["", "", "-1"])
+								boneHead = Inde(boneHead, int(indeComp))
+								brea = True
+								break
+						if brea == True:
+							break
+					inde, bone, side, inst = BoneNameSpli(entr[1])
+					if (bone == "spin" and spinCoun > spinMini) or (bone == "shou" and shouCoun > shouMini) or (bone == "hip_" and hip_Coun > hip_Mini):
+						inst = "000"
+					boneTail = ConcList([bone, side, inst], emptList = ["", "", "-1"])
+					boneTail = Inde(boneTail, markCoun + 1)
+					boneName = Inde(entr[2], markCoun)
+					locaList.append(None)
+				markCoun += 1
+				bran.append([boneHead, boneTail, boneName])
+		a += 1
+	retu.append(bran)
+	rig_List = []
+	for a in range(len(retu)):
+		rig_List += retu[a]
+	retu.insert(0, rig_List)
+	if faci != "+x":
+		if faci == "-x":
+			for a in range(len(locaList)):
+				if locaList[a] != None:
+					locaList[a] = (locaList[a][0], -locaList[a][1], locaList[a][2])
+		if faci == "+y":
+			for a in range(len(locaList)):
+				if locaList[a] != None:
+					locaList[a] = (locaList[a][1], -locaList[a][0], locaList[a][2])
+		if faci == "-y":
+			for a in range(len(locaList)):
+				if locaList[a] != None:
+					locaList[a] = (locaList[a][1], locaList[a][0], locaList[a][2])
+	retu.append(locaList)
+	switList = []
+	regiList = []
+	for a in range(len(rig_List)):
+		switList.append(False)
+		regiList.append("s")
+	retu.append(switList)
+	retu.append(regiList)
+	return retu
+
+def MarkCrea(rig_List, locaList, mesh, charName = "", pref = "rig_"):
+	scal = 0.2
+	Empt()
+	Pare(mesh)
+	pare = ConcList([charName, pref])
+	Name(pare)
+	Scal((scal, scal, scal))
+	a = 0
+	while a < len(rig_List):
+		rig_ = rig_List[a][0]
+		loca = locaList[a]
+		inde, bone, side, inst = BoneNameSpli(rig_)
+		if loca != None:
+			# right side will automatically be reflected from the left side
+			if side != "r":
+				Empt()
+				Name(ConcList([charName, pref, rig_]))
+				Scal((scal, scal, scal))
+				ApplScal()
+				Loca(loca)
+				Pare(pare)
+		a += 1
+
+def Alig(branList, aligInde = 0, charName = "", pref = "rig_"):
+	loca = None
+	a = 0
+	while a < len(branList):
+		if a >= aligInde:
+			if loca == None:
+				if a == aligInde:
+					Sele(ConcList([charName, pref, branList[a][0]]))
+					loca = LocaRead()
+					a = -1
+			else:
+				sele = ConcList([charName, pref, branList[a][0]])
+				Sele(sele)
+				z = LocaRead()
+				Loca((loca[0], loca[1], z[2]))
+		a += 1
+
+def MarkRefl(rig_List, charName = "", pref = "rig_"):
+	scal = 0.2
+	pare = ConcList([charName, pref])
+	for rig_ in rig_List:
+		sele = ConcList([charName, pref, rig_[0]])
+		obje = Sele(sele)
+		if obje == None:
+			reflName = MarkReflName(rig_[0], rig_List, charName = charName, pref = pref)
+			Sele(reflName)
+			loca = MarkReflLoca(rig_[0], rig_List, charName = charName, pref = pref, reflName = reflName)
+			Empt()
+			Scal((scal, scal, scal))
+			ApplScal()
+			Name(sele)
+			Loca(loca)
+			# TODO: assumes this exists
+			Pare(pare)
+
+def MarkReflLoca(markName, rig_List, charName = "", pref = "rig_", reflName = ""):
+	sele = ConcList([charName, pref, markName])
+	obje = Sele(sele)
+	if obje == None:
+		if reflName == "":
+			reflName = MarkReflName(markName, rig_List, charName = charName, pref = pref)
+		Sele(reflName)
+	retu = LocaRead()
+	if obje == None:
+		# TODO: use a vector
+		if retu[0] >= retu[1]:
+			retu = (-retu[0], retu[1], retu[2])
+		else:
+			retu = (retu[0], -retu[1], retu[2])
+	return retu
+
+def MarkReflName(markName, rig_List, charName = "", pref = "rig_"):
+	inde, bone, side, inst = BoneNameSpli(markName)
+	for a in range(len(rig_List)):
+		rig_ = rig_List[a][0]
+		indeOppo, boneOppo, sideOppo, instOppo = BoneNameSpli(rig_)
+		if boneOppo == bone and sideOppo != side and instOppo == inst:
+			break
+	return ConcList([charName, pref, indeOppo, boneOppo, sideOppo, instOppo], emptList = ["", "", "-1", "", "", "-1"])
+
+def Rig_(mesh, rig_List, branList, charName = "", pref = "rig_", armaName = "Armature", spinCoun = 3, shouCoun = 1, hip_Coun = 1, modiName = "Armature"):
+	import bpy
+	Math = MathLink()
+	spinMini = 3
+	shouMini = 1
+	hip_Mini = 1
+	spinCuttLowe = 1
+	shouCuttLowe = 0
+	hip_CuttLowe = 0
+	spinCuttUppeDiff = 1
+	shouCuttUppeDiff = 0
+	hip_CuttUppeDiff = 0
+	def RotaMast(boneName, boneSide, coun, diff, cutt, charName = ""):
+		vertList = [(0.0, 0.0, 0.0)]
+		boneList = []
+		for bran in branList:
+			inde, bone, side, inst = BoneNameSpli(bran[0])
+			if bone == boneName and side == boneSide and int(inst) >= cutt:
+				longName = ConcList([inde, bone, side, inst], emptList = ["-1", "", "", "-1"])
+				# TODO: can loca be used here?
+				exis = False
+				for a in range(len(boneList)):
+					if boneList[a] == longName:
+						exis = True
+						break
+				if exis == False:
+					boneList.append(longName)
+		boneList = sorted(boneList)
+		if len(boneList) > 0:
+			sele = ConcList([charName, pref, boneList[0]])
+			Sele(sele)
+			loca = LocaRead()
+			Uplo([vertList, [], []])
+			vers = bpy.app.version
+			if vers[0] >= 3 or (vers[0] == 2 and vers[1] >= 80):
+				bpy.ops.object.move_to_collection(collection_index = 1)
+			vers = bpy.app.version
+			if vers[0] >= 3 or (vers[0] == 2 and vers[1] >= 80):
+				bpy.ops.object.move_to_collection(collection_index = 1)
+			mastName = ConcList([charName, pref, boneName, side])
+			Name(mastName)
+			Loca(loca)
+			# TODO: cyclic dependency
+			#Pare(armaName)
+			# TODO: assumes this exists
+			Pare(charName)
+			Sele(armaName)
+			bpy.ops.object.posemode_toggle()
+			for a in range(len(boneList)):
+				bpy.data.objects[armaName].data.bones.active = bpy.data.objects[armaName].pose.bones[boneList[a]].bone
+				bpy.ops.pose.constraint_add(type = 'COPY_ROTATION')
+				bpy.data.objects[armaName].pose.bones[boneList[a]].constraints['Copy Rotation'].target = bpy.data.objects[mastName]
+				bpy.data.objects[armaName].pose.bones[boneList[a]].constraints['Copy Rotation'].influence = 1.0 / diff
+				bpy.data.objects[armaName].pose.bones[boneList[a]].constraints['Copy Rotation'].target_space = 'WORLD'
+				bpy.data.objects[armaName].pose.bones[boneList[a]].constraints['Copy Rotation'].owner_space = 'LOCAL'
+				bpy.data.objects[armaName].data.bones.active.select = False
+				bpy.data.objects[armaName].data.bones.active = None
+			bpy.ops.object.posemode_toggle()
+	##########################
+	Sele(mesh)
+	bodyLoca = LocaRead()
+	obje = Sele(armaName)
+	fork = False
+	if obje == None:
+		bpy.ops.object.armature_add()
+		vers = bpy.app.version
+		if vers[0] >= 3 or (vers[0] == 2 and vers[1] >= 80):
+			bpy.ops.object.move_to_collection(collection_index = 1)
+		Name(armaName)
+		Loca(bodyLoca)
+	dataName = bpy.context.object.data.name
+	if len(branList) > 0:
+		Sele(armaName)
+		Edit()
+		if branList[0][0] in bpy.data.armatures[dataName].edit_bones:
+			bpy.data.armatures[dataName].edit_bones.active = bpy.data.armatures[dataName].edit_bones[branList[0][0]]
+			bpy.data.armatures[dataName].edit_bones.active.select = False
+			bpy.data.armatures[dataName].edit_bones.active.select_head = True
+			# TODO: if a head and tail are placed in the same location, blender deletes the bone. this places it in an arbitrary position
+			bpy.ops.armature.extrude_move(ARMATURE_OT_extrude = {"forked" : True}, TRANSFORM_OT_translate = {"value" : (1.23456, -1.23456, 1.23456)})
+			bpy.data.armatures[dataName].edit_bones.active.select_head = False
+			fork = True
+		Edit()
+	spinRota = False
+	sholRota = False
+	shorRota = False
+	hiplRota = False
+	hiprRota = False
+	for a in range(len(branList) - 1):
+		inde, bone, side, inst = BoneNameSpli(branList[a][0])
+		inst = int(inst)
+		locaHead = MarkReflLoca(branList[a][0], rig_List, charName = charName)
+		locaTail = MarkReflLoca(branList[a][1], rig_List, charName = charName)
+		Sele(armaName)
+		Edit()
+		# extrude a new bone
+		if a != 0:
+			bpy.data.armatures[dataName].edit_bones.active.select_tail = True
+			# TODO: if a head and tail are placed in the same location, blender deletes the bone. this places it in an arbitrary position
+			bpy.ops.armature.extrude_move(TRANSFORM_OT_translate = {"value" : (1.23456, 1.23456, 1.23456)})
+			bpy.data.armatures[dataName].edit_bones.active.select_tail = False
+		# place head
+		if a == 0 and fork == False:
+			headLoca = Math.Vect(bodyLoca, locaHead)
+			bpy.data.armatures[dataName].edit_bones.active.select_head = True
+			bpy.data.armatures[dataName].edit_bones.active.head = headLoca
+			bpy.data.armatures[dataName].edit_bones.active.select_head = False
+		# place tail
+		bpy.data.armatures[dataName].edit_bones.active.select_tail = True
+		bpy.data.armatures[dataName].edit_bones.active.tail = Math.Vect(bodyLoca, locaTail)
+		bpy.data.armatures[dataName].edit_bones.active.select_tail = False
+		# name
+		bpy.data.armatures[dataName].edit_bones.active.name = branList[a][2]
+		Edit()
+		# master rotaters
+		# TODO: what about branch bones?
+		if bone == "spin" and spinCoun > spinMini and inst == 0:
+			spinRota = True
+		if bone == "shou" and shouCoun > shouMini and inst == shouCoun - 1:
+			if side == "l":
+				sholRota = True
+			elif side == "r":
+				shorRota = True
+		if bone == "hip_" and hip_Coun > hip_Mini and inst == hip_Coun - 1:
+			if side == "l":
+				hiplRota = True
+			elif side == "r":
+				hiprRota = True
+	# master rotaters
+	bon_ = side = coun = cutt = ""
+	# TODO: prevent branch bones from triggering master rotations
+	if spinRota == True:
+		bon_ = "spin"
+		side = "m"
+		coun = spinCoun
+		diff = coun - spinCuttUppeDiff - spinCuttLowe
+		cutt = spinCuttLowe
+	if sholRota == True:
+		bon_ = "shou"
+		side = "l"
+		coun = shouCoun
+		diff = coun - shouCuttUppeDiff - shouCuttLowe
+		cutt = shouCuttLowe
+	if shorRota == True:
+		bon_ = "shou"
+		side = "r"
+		coun = shouCoun
+		diff = coun - shouCuttUppeDiff - shouCuttLowe
+		cutt = shouCuttLowe
+	if hiplRota == True:
+		bon_ = "hip_"
+		side = "l"
+		coun = hip_Coun
+		diff = coun - hip_CuttUppeDiff - hip_CuttLowe
+		cutt = hip_CuttLowe
+	if hiprRota == True:
+		bon_ = "hip_"
+		side = "r"
+		coun = hip_Coun
+		diff = coun - hip_CuttUppeDiff - hip_CuttLowe
+		cutt = hip_CuttLowe
+	if bon_ != "":
+		RotaMast(bon_, side, coun, diff, cutt, charName = charName)
+
+def BoneRollRese(armaName = "Armature"):
+	import bpy
+	Sele(armaName)
+	dataName = bpy.context.object.data.name
+	Edit()
+	for bone in bpy.context.object.data.edit_bones:
+		bone.roll = 0.0
+	Edit()
+
+def BoneRotaMode(armaName = "Armature"):
+	import bpy
+	Sele(armaName)
+	bpy.ops.object.posemode_toggle()
+	for bone in bpy.context.object.pose.bones:
+		bone.rotation_mode = 'XYZ'
+	bpy.ops.object.posemode_toggle()
+
+def ArmaVolu(modiName = "Armature"):
+	import bpy
+	bpy.context.object.modifiers[modiName].use_deform_preserve_volume = True
+
+def MarkRead(rig_List, boneName, charName = "", pref = "rig_", use_Inst = False):
+	for b in range(len(rig_List)):
+		inde, bone, side, inst = BoneNameSpli(rig_List[b][0])
+		indeComp, boneComp, sideComp, instComp = BoneNameSpli(boneName)
+		if bone == boneComp and side == sideComp:
+			if use_Inst == False or (use_Inst == True and inst == instComp):
+				break
+	retu = ""
+	if use_Inst == False:
+		retu = ConcList([charName, pref, inde, bone, side], emptList = ["", "", "-1", "", ""])
+	else:
+		retu = ConcList([charName, pref, inde, bone, side, inst], emptList = ["", "", "-1", "", "", "-1"])
+	return retu
+
+# override - markers are selected automatically. override automatic selection:
+# "rig_": select "rig_" marker
+# "loop": select "rig_.loop" marker
+def LoopNear(mesh, mark, swit = False, override = ""):
+	import bpy
+	obje = Sele(mark + "." + "loop.000")
+	retu = []
+	if obje != None and override != "rig_" and override != "loop":
+		vertList = []
+		a = 1
+		while obje != None:
+			loca = LocaRead()
+			Sele(mesh)
+			vertList.append(VertIndeBy__Loca(loca, False))
+			obje = Sele(mark + "." + "loop." + Pad_(a))
+			a += 1
+		loop = []
+		for a in range(len(vertList) - 1):	
+			PathShor(vertList[a], vertList[a + 1])
+			loop += VertListSele()
+		VertSele(loop)
+		if len(loop) > 1:
+			retu = [loop[0], loop[1]]
+	else:
+		if override != "loop":
+			obje = Sele(mark)
+		if override != "rig_" or obje == None:
+			Sele(mark + "." + "loop")
+		loca = LocaRead()
+		Sele(mesh)
+		inde = VertIndeBy__Loca(loca, False)
+		vertList = VertConn(inde)
+		# select all combinations and get the vert count
+		vertCoun = -1
+		vertInde = -1
+		for a in range(len(vertList)):
+			VertSele([inde, vertList[a]])
+			Loop()
+			try:
+				import numpy
+				leng = len(Vertices())
+				sele = numpy.zeros(leng, dtype = bool)
+				bpy.context.object.data.vertices.foreach_get('select', sele)
+				sele = sele[sele]
+				coun = len(sele)
+			except:
+				# TODO: doesnt work. maybe this is not updated?
+				#coun = bpy.context.object.data.total_vert_sel
+				coun = 0
+				for b in range(len(Vertices())):
+					if bpy.context.object.data.vertices[b].select == True:
+						coun += 1
+			if vertCoun == -1 or (swit != True and coun < vertCoun) or (swit == True and coun > vertCoun):
+				vertCoun = coun
+				vertInde = a
+		retu = [inde, vertList[vertInde]]
+		VertSele(retu)
+		Loop()
+	return retu
+
+# "s" - successive. select the region between two loops
+# "f" - fill. select all vertices from a loop to the end of an appendage
+# [] - list. select the region between a set of loops
+def LoopRegi(mesh, inde, rig_List, switList, typ_ = "s", charName = "", pref = "rig_"):
+	import bpy
+	fill = True
+	if typ_ == "s" or typ_ == "f":
+		mark = MarkRead(rig_List, rig_List[inde][0], charName = charName, pref = pref)
+		LoopNear(mesh, mark, swit = switList[inde])
+		ver1List = VertListSele()
+		mark = MarkRead(rig_List, rig_List[inde + 1][0], charName = charName, pref = pref)
+		LoopNear(mesh, mark, swit = switList[inde + 1])
+		ver2List = VertListSele()
+		if typ_ == "f":
+			ver2List = []
+		vertList = ver1List + ver2List
+		# if one loop is connected to the other, don't fill
+		brea = False
+		for a in range(len(ver1List)):
+			conn = VertConn(ver1List[a])
+			for con_ in conn:
+				for b in range(len(ver2List)):
+					if con_ == ver2List[b]:
+						fill = False
+						brea = True
+						break
+				if brea == True:
+					break
+			if brea == True:
+				break
+	if type(typ_) == list:
+		vertList = []
+		for loop in typ_:
+			mark = MarkRead(rig_List, rig_List[loop][0], charName = charName, pref = pref)
+			LoopNear(mesh, mark, swit = switList[loop])
+			vertList += VertListSele()
+	if typ_ == "f":
+		fill = True
+	VertSele(vertList)
+	if fill == True:
+		Regi()
+
+def Skin(mesh, inde, rig_List, switList, typ_Regi = "s", charName = "", pref = "rig_"):
+	if typ_Regi != None:
+		LoopRegi(mesh, inde, rig_List, switList, typ_ = typ_Regi, charName = charName, pref = pref)
+		vertList = VertListSele()
+		VertGrou(rig_List[inde][0], vertList)
+		VertDese()
+
+# ! make sure modiName doesn't clash with an existing modifier name or the wrong one will be set
+def SkinAll_(mesh, rig_List, switList, regiList, armaName = "Armature", add_Modi = True, modiName = "Armature", charName = "", pref = "rig_"):
+	import bpy
+	if add_Modi == True:
+		Sele(mesh)
+		bpy.context.object.modifiers.new(modiName, type = 'ARMATURE')
+		bpy.context.object.modifiers[modiName].object = bpy.data.objects[armaName]
+	Sele(mesh)
+	VertDese()
+	for a in range(len(regiList)):
+		print("grouping", a, "of", len(regiList) - 1)
+		Skin(mesh, a, rig_List, switList, typ_Regi = regiList[a], charName = charName, pref = pref)
+
+def SkinExtr(objeList, grouName, armaName = "Armature", modiName = "Armature"):
+	import bpy
+	for obje in objeList:
+		Sele(obje)
+		# ! make sure modiName doesn't clash with an existing modifier
+		bpy.context.object.modifiers.new(modiName, type = 'ARMATURE')
+		bpy.context.object.modifiers[modiName].object = bpy.data.objects[armaName]
+		VertSeleAll_()
+		vertList = VertListSele()
+		VertGrou(grouName, vertList)
+		bpy.context.object.vertex_groups[grouName].add(vertList, 1.0, type = 'ADD')
+
+def SpliRead(charName = ""):
+	spliList = []
+	spliList.append(charName + "." + "head.m")
+	spliList.append(charName + "." + "wris.l")
+	spliList.append(charName + "." + "elbo.l")
+	spliList.append(charName + "." + "shou.l")
+	spliList.append(charName + "." + "ankl.l")
+	spliList.append(charName + "." + "knee.l")
+	spliList.append(charName + "." + "hip_.l")
+	spliList.append(charName + "." + "wris.r")
+	spliList.append(charName + "." + "elbo.r")
+	spliList.append(charName + "." + "shou.r")
+	spliList.append(charName + "." + "ankl.r")
+	spliList.append(charName + "." + "knee.r")
+	spliList.append(charName + "." + "hip_.r")
+	switList = []
+	for a in range(len(spliList)):
+		switList.append(False)
+	pareDict = {}
+	pareDict.update({charName + "." + "head.m": charName + "." + "body"})
+	pareDict.update({charName + "." + "wris.l": charName + "." + "elbo.l"})
+	pareDict.update({charName + "." + "elbo.l": charName + "." + "shou.l"})
+	pareDict.update({charName + "." + "shou.l": charName + "." + "body"})
+	pareDict.update({charName + "." + "ankl.l": charName + "." + "knee.l"})
+	pareDict.update({charName + "." + "knee.l": charName + "." + "hip_.l"})
+	pareDict.update({charName + "." + "hip_.l": charName + "." + "body"})
+	pareDict.update({charName + "." + "wris.r": charName + "." + "elbo.r"})
+	pareDict.update({charName + "." + "elbo.r": charName + "." + "shou.r"})
+	pareDict.update({charName + "." + "shou.r": charName + "." + "body"})
+	pareDict.update({charName + "." + "ankl.r": charName + "." + "knee.r"})
+	pareDict.update({charName + "." + "knee.r": charName + "." + "hip_.r"})
+	pareDict.update({charName + "." + "hip_.r": charName + "." + "body"})
+	flipList = []
+	flipList.append(False)
+	flipList.append(True)
+	flipList.append(False)
+	flipList.append(False)
+	flipList.append(True)
+	flipList.append(False)
+	flipList.append(False)
+	flipList.append(False)
+	flipList.append(True)
+	flipList.append(True)
+	flipList.append(False)
+	flipList.append(True)
+	flipList.append(True)
+	return spliList, switList, pareDict, flipList
+
+def LoopList(mesh, spliList, rig_List, switList, charName = ""):
+	Sele(mesh)
+	retu = []
+	for a in range(len(spliList)):
+		VertDese()
+		mark = MarkRead(rig_List, spliList[a], charName = charName)
+		ver1, ver2 = LoopNear(mesh, mark, swit = switList[a])
+		ver1 = VertLoca([ver1])
+		ver1 = ver1[0]
+		ver2 = VertLoca([ver2])
+		ver2 = ver2[0]
+		retu.append([ver1, ver2])
+	return retu
+
+def LoopListRead(fileName = "list/loop"):
+	Pyth = PythLink()
+	retu = []
+	loopList = Pyth.FileTo__Line(fileName)
+	for a in range(len(loopList)):
+		retu.append(Pyth.StriListTo__Tupl(loopList[a]))
+	return retu
+
+def LoopListWrit(loopList, fileName = "list/loop"):
+	Pyth = PythLink()
+	retu = []
+	for a in range(len(loopList)):
+		retu.append(Pyth.TuplListTo__Stri(loopList[a]))
+	Pyth.LineTo__File(retu, fileName)
+
+def MeshSpli(mesh, spliList, loopList, rig_List, flipList, charName = "", pref = "rig_"):
+	import bpy
+	for a in range(len(spliList)):
+		spli = spliList[a]
+		mark = MarkRead(rig_List, spli, charName = charName, pref = pref)
+		# split
+		MeshSpliPart(mesh, spli, mark, loopList[a], charName = charName)
+		BallAnd_Sock(mesh, mark, loopList[a], flip = flipList[a])
+		BallAnd_Sock(spli, mark, loopList[a], flip = flipList[a])
+		print("split", a + 1, "of", len(spliList))
+
+def MeshSpliPart(copy, spli, mark, vertList, charName = ""):
+	import bpy
+	Math = MathLink()
+	Sele(copy)
+	Name("mesh_spli_temp")
+	vertLocaList = []
+	for a in range(len(vertList)):
+		vertLocaList.append(VertIndeBy__Loca(vertList[a]))
+	VertSele(vertLocaList)
+	Loop()
+	Dupl()
+	Name(copy)
+	ver1List = VertListSele()
+	Regi()
+	ver2List = VertListSele()
+	for a in range(len(ver1List)):
+		b = 0
+		while b < len(ver2List):
+			if ver1List[a] == ver2List[b]:
+				ver2List.pop(b)
+				b = -1
+			b += 1
+	VertDese()
+	VertSele(ver2List)
+	VertDele()
+	# remove unused materials from the object
+	MatePurgObje()
+	Sele("mesh_spli_temp")
+	# set origin
+	# TODO: using cursor to selected on a loop doesn't match vect average
+	#Edit()
+	#CursTo__Sele(edit = True)
+	#Edit()
+	# workaround
+	ver2List = VertListSele()
+	ver2List = VertLoca(ver2List)
+	aver = Math.VectAver(ver2List)
+	Curs(aver)
+	OrigCurs()
+	Regi()
+	Edit()
+	bpy.ops.mesh.select_all(action = 'INVERT')
+	Edit()
+	VertDele()
+	Name(spli)
+	MatePurgObje()
+
+def BallAnd_Sock(part, mark, vertList, flip = False):
+	import bpy
+	Math = MathLink()
+	Sele(part)
+	# store the transformation of the object
+	scal, rota, loca = TranRead()
+	# get the locations of the vertices in the loop
+	vertLocaList = []
+	for a in range(len(vertList)):
+		vertLocaList.append(VertIndeBy__Loca(vertList[a]))
+	VertSele(vertLocaList)
+	Loop()
+	vertLocaList = VertListSele()
+	vertLocaList = VertLoca(vertLocaList)
+	cent = Math.VectAver(vertLocaList)
+	for a in range(len(vertLocaList)):
+		vertLocaList[a] = Math.Vect(cent, vertLocaList[a])
+	# sort the vertex list by angle from center
+	# TODO: slow
+	vertAngl = []
+	if len(vertLocaList) > 0:
+		vertAngl = [[0, vertLocaList[0]]]
+	a = 0
+	while len(vertAngl) < len(vertLocaList):
+		diffList = []
+		for b in range(len(vertLocaList)):
+			if a != b and vertLocaList[b] != None:
+				vect = Math.Vect(vertLocaList[a], vertLocaList[b])
+				diff = Math.VectMagn(vect)
+				diffList.append([diff, b])
+		diffList = sorted(diffList)
+		inde = diffList[0][1]
+		vertAngl.append([inde, vertLocaList[inde]])
+		vertLocaList[a] = None
+		a = inde
+	vertLocaList = []
+	magnList = []
+	for vect in vertAngl:
+		vertLocaList.append(vect[1])
+		magn = Math.VectMagn(vect[1])
+		magnList.append(magn)
+	# get the average cross product of adjacent vectors to find the cap of a semi-sphere that joins the loop
+	# TODO: better way to do this
+	magnTota = 0.0
+	crosList = []
+	a = 0
+	while a < len(vertLocaList) - 1:
+		vec1 = vertLocaList[a]
+		vec2 = vertLocaList[a + 1]
+		crosVect = Math.VectCros3d__(vec1, vec2)
+		# if the vector is pointing down, flip it
+		# TODO: (0.0, 0.0, 1.0) might be arbitrary
+		faci = Math.Faci((0.0, 0.0, 1.0), (0.0, 0.0, 0.0), crosVect)
+		if faci == False:
+			crosVect = Math.VectScal(crosVect, -1.0)
+		if Math.VectMagn(crosVect) <= 0.01:
+			crosVect = Math.VectScal(crosVect, 10.0)
+		crosList.append(crosVect)
+		magn = Math.VectMagn(vertLocaList[a])
+		magnTota += magn
+		a += 1
+	vec1 = vertLocaList[0]
+	vec2 = vertLocaList[a]
+	crosList.append(Math.VectCros3d__(vec1, vec2))
+	magn = Math.VectMagn(vertLocaList[a])
+	magnTota += magn
+	magnTota /= a + 1
+	head = Math.VectAver(crosList)
+	head = Math.VectNorm(head)
+	head = Math.VectScal(head, magnTota)
+	# get the material of a polygon adjacent to the loop
+	Edit()
+	bpy.ops.mesh.select_more()
+	Edit()
+	try:
+		import numpy
+		leng = len(Polygons())
+		sele = numpy.zeros(leng, dtype = bool)
+		inte = numpy.arange(leng)
+		bpy.context.object.data.polygons.foreach_get('select', sele)
+		sele = inte[sele]
+		sele = list(sele)
+	except:
+		sele = []
+		for a in range(len(Polygons())):
+			if bpy.context.object.data.polygons[a].select == True:
+				sele.append(a)
+	mateName = -1
+	if len(sele) > 0:
+		mateName = bpy.context.object.data.polygons[sele[0]].material_index
+		mateName = bpy.context.object.material_slots[mateName].material.name
+	Edit()
+	bpy.ops.mesh.select_less()
+	Edit()
+	# build a semi-sphere
+	# TODO: try to preserve loop selections (look at Math.Sphe())
+	new_VertList = []
+	edgeList = []
+	polyList = []
+	segsNumb = 8
+	brea = False
+	i = 0
+	a = 0
+	while a < len(vertLocaList):
+		# get the length of the vector from the center of the loop to the vertex
+		magn = magnList[a]
+		vect = vertLocaList[a]
+		axis = Math.VectCros3d__(vect, head)
+		axis = Math.VectNorm(axis)
+		for b in range(segsNumb):
+			# draw an arc that connects the vertex to the direction vector
+			angl = b * 90.0 / segsNumb
+			magnAdju = magn + (b / (segsNumb - 1)) * (magnTota - magn)
+			vectNew_ = Math.Quat(vect, angl, axis)
+			vectNew_ = Math.VectNorm(vectNew_)
+			vectNew_ = Math.VectScal(vectNew_, magnAdju)
+			new_VertList.append(vectNew_)
+			# rings
+			if b < segsNumb - 1:
+				edgeList.append((i, i + 1))
+			i += 1
+			# loops
+			if a > 0 and a < len(vertLocaList) - 1 or (a == 0 and b == segsNumb - 1) or (a == len(vertLocaList) - 1 and b != segsNumb - 1):
+				edgeList.append((i, i - segsNumb))
+			# add faces
+			if a > 0 and b < segsNumb - 1:
+				polyList.append((i - segsNumb, i, i - 1, i - 1 - segsNumb))
+		a += 1
+	# last ring
+	for a in range(segsNumb):
+		edgeList.append((a, i - segsNumb))
+		i += 1
+		if a < segsNumb - 1:
+			polyList.append((a + 1, a, i - segsNumb - 1, i - segsNumb))
+	# cap
+	new_VertList.append(head)
+	a = 0
+	while a < len(vertLocaList):
+		edgeList.append((a * segsNumb + segsNumb - 1, len(new_VertList) - 1))
+		if a < len(vertLocaList) - 1:
+			polyList.append(((a + 1) * segsNumb + segsNumb - 1, a * segsNumb + segsNumb - 1, len(new_VertList) - 1))
+		a += 1
+	polyList.append((segsNumb - 1, (a - 1) * segsNumb + segsNumb - 1, len(new_VertList) - 1))
+	# apply global position to all vertices
+	for a in range(len(new_VertList)):
+		new_VertList[a] = Math.Tran3d__(new_VertList[a], scal, rota, loca)
+	# upload
+	Uplo([new_VertList, edgeList, polyList])
+	vers = bpy.app.version
+	if vers[0] >= 3 or (vers[0] == 2 and vers[1] >= 80):
+		bpy.ops.object.move_to_collection(collection_index = 1)
+	# TODO: socket will be see-through in game mode unless the material is set to two-sided
+	if flip == True:
+		Flip()
+	if mateName != -1:
+		if len(bpy.context.object.material_slots) == 0:
+			bpy.ops.object.material_slot_add()
+		bpy.context.object.material_slots[0].material = bpy.data.materials[mateName]
+	Loca(cent)
+	new_Obje = bpy.context.object.name
+	# shade smooth
+	Edit()
+	bpy.ops.mesh.faces_shade_smooth()
+	Edit()
+	Sele(part)
+	# join
+	Join(new_Obje)
+	# remove doubles
+	VertDoub()
+
+def MatePurgObje():
+	import bpy
+	VertDese()
+	mode = tuple(bpy.context.tool_settings.mesh_select_mode)
+	bpy.context.tool_settings.mesh_select_mode = (False, False, True)
+	remo = []
+	for a in range(len(bpy.context.object.material_slots)):
+		bpy.context.object.active_material_index = a
+		Edit()
+		bpy.ops.object.material_slot_select()
+		Edit()
+		try:
+			import numpy
+			leng = len(Polygons())
+			sele = numpy.zeros(leng, dtype = bool)
+			bpy.context.object.data.polygons.foreach_get('select', sele)
+			sele = sele[sele]
+			coun = len(sele)
+		except:
+			coun = 0
+			for a in range(len(Polygons())):
+				if bpy.context.object.data.polygons[a].select == True:
+					coun += 1
+		VertDese()
+		if coun == 0:
+			remo.append(a)
+	a = len(remo) - 1
+	while a >= 0:
+		bpy.context.object.active_material_index = remo[a]
+		bpy.ops.object.material_slot_remove()
+		a -= 1
+	bpy.context.tool_settings.mesh_select_mode = mode
+
+# back up vertex positions
+def VertBack(fileName = "vert_loca"):
+	Pyth = PythLink()
+	vertList = VertListSele()
+	vertListLoca = VertLoca(vertList)
+	retu = []
+	retu.append(Pyth.ListTo__Stri(vertList))
+	retu.append(Pyth.ListTo__Stri(vertListLoca))
+	Pyth.LineTo__File(retu, fileName)
+
+# restore vertex positions
+def VertRest(fileName = "vert_loca"):
+	import bpy
+	Pyth = PythLink()
+	vertList = Pyth.FileTo__Line(fileName)
+	vertListLoca = vertList[1]
+	vertList = vertList[0]
+	vertList = Pyth.StriListTo__Int_List(vertList)
+	vertListLoca = Pyth.StriListTo__Tupl(vertListLoca)
+	for a in range(len(vertList)):
+		bpy.context.object.data.vertices[vertList[a]].co = vertListLoca[a]
+
+def WeigBack(fileName = "weig"):
+	import bpy
+	Pyth = PythLink()
+	retu = []
+	for a in range(len(bpy.context.object.vertex_groups)):
+		grou = bpy.context.object.vertex_groups[a]
+		grouLine = ""
+		VertDese()
+		# get vertices in group
+		VertGrouSele(grou.name)
+		grouLine = grou.name + " "
+		vertList = VertListSele(meth = 2)
+		for b in range(len(vertList)):
+			grouLine += str(vertList[b]) + " " + str(grou.weight(vertList[b])) + " "
+		grouLine = grouLine[0:len(grouLine) - 1]
+		retu.append(grouLine)
+	Pyth.LineTo__File(retu, fileName)
+
+def WeigRest(fileName = "weig"):
+	import bpy
+	Pyth = PythLink()
+	weig = Pyth.FileTo__Line(fileName)
+	nameList = []
+	vertList = []
+	weigList = []
+	for a in range(len(weig)):
+		grouVertList = []
+		grouWeig = weig[a].split(" ")
+		nameList.append(grouWeig[0])
+		grouWeigList = []
+		b = 1
+		while b < len(grouWeig):
+			grouVertList.append(int(grouWeig[b]))
+			grouWeigList.append(float(grouWeig[b + 1]))
+			b += 2
+		vertList.append(grouVertList)
+		weigList.append(grouWeigList)
+	for a in range(len(nameList)):
+		bpy.ops.object.vertex_group_add()
+		grouNumb = -1
+		for b in range(len(bpy.context.object.vertex_groups)):
+			grouName = bpy.context.object.vertex_groups[b].name
+			grouName = grouName.split(".")
+			if len(grouName) > 0:
+				if grouName[0] == 'Group':
+					grouNumb = b
+		bpy.context.object.vertex_groups[grouNumb].name = nameList[a]
+		for b in range(len(vertList[a])):
+			bpy.context.object.vertex_groups[grouNumb].add([vertList[a][b]], weigList[a][b], type = 'ADD')
 
 #############################################
 
@@ -1136,39 +2544,61 @@ def SpotShad(use_shadow = False):
 
 # INSTANCE
 
-def Empt():
+def Empt(inde = 1):
 	import bpy
-	bpy.ops.object.empty_add(type='PLAIN_AXES', radius=1, view_align=False, location=(0, 0, 0), layers=(True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
+	bpy.ops.object.empty_add(type = 'PLAIN_AXES', location = (0.0, 0.0, 0.0))
+	vers = bpy.app.version
+	if vers[0] >= 3 or (vers[0] == 2 and vers[1] >= 80):
+		bpy.ops.object.move_to_collection(collection_index = inde)
 
-def Plan():
+
+def Plan(inde = 1):
 	import bpy
 	bpy.ops.mesh.primitive_plane_add(view_align=False, enter_editmode=False, location=(0, 0, 0), layers=(True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
+	vers = bpy.app.version
+	if vers[0] >= 3 or (vers[0] == 2 and vers[1] >= 80):
+		bpy.ops.object.move_to_collection(collection_index = inde)
 
-def Sphe():
+def Sphe(inde = 1):
 	import bpy
 	bpy.ops.mesh.primitive_uv_sphere_add(size=1, view_align=False, enter_editmode=False, location = (0, 0, 0), layers=(True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
+	vers = bpy.app.version
+	if vers[0] >= 3 or (vers[0] == 2 and vers[1] >= 80):
+		bpy.ops.object.move_to_collection(collection_index = inde)
 
-def Cube():
+def Cube(inde = 1):
 	import bpy
 	bpy.ops.mesh.primitive_cube_add(radius=1, view_align=False, enter_editmode=False, location=(0, 0, 0), layers=(True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
+	vers = bpy.app.version
+	if vers[0] >= 3 or (vers[0] == 2 and vers[1] >= 80):
+		bpy.ops.object.move_to_collection(collection_index = inde)
 
-def Cyli():
+def Cyli(inde = 1):
 	import bpy
 	bpy.ops.mesh.primitive_cylinder_add(radius=1, depth=2, view_align=False, enter_editmode=False, location=(0, 0, 0), layers=(True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
+	vers = bpy.app.version
+	if vers[0] >= 3 or (vers[0] == 2 and vers[1] >= 80):
+		bpy.ops.object.move_to_collection(collection_index = inde)
 
-def Cone():
+def Cone(inde = 1):
 	import bpy
 	bpy.ops.mesh.primitive_cone_add(radius1=1, radius2=0, depth=2, view_align=False, enter_editmode=False, location=(0, 0, 0), layers=(True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
+	vers = bpy.app.version
+	if vers[0] >= 3 or (vers[0] == 2 and vers[1] >= 80):
+		bpy.ops.object.move_to_collection(collection_index = inde)
 
-def VertAdd_():
+def VertAdd_(inde = 1):
 	Cube()
 	VertSeleAll_()
 	Edit()
 	Merg()
 	Edit()
 	VertDese()
+	vers = bpy.app.version
+	if vers[0] >= 3 or (vers[0] == 2 and vers[1] >= 80):
+		bpy.ops.object.move_to_collection(collection_index = inde)
 
-def Curv(clea = True):
+def Curv(clea = True, inde = 1):
 	import bpy
 	bpy.ops.curve.primitive_bezier_curve_add(location=(0.0, 0.0, 0.0))
 	if clea == True:
@@ -1177,12 +2607,18 @@ def Curv(clea = True):
 		bpy.context.object.data.splines[0].bezier_points[1].select_control_point = True
 		bpy.ops.curve.delete(type='VERT')
 		Edit()
+	vers = bpy.app.version
+	if vers[0] >= 3 or (vers[0] == 2 and vers[1] >= 80):
+		bpy.ops.object.move_to_collection(collection_index = inde)
 
-def Circ():
+def Circ(inde = 1):
 	import bpy
 	bpy.ops.curve.primitive_bezier_circle_add(radius=1, view_align=False, enter_editmode=False, location=(0, 0, 0), layers=(True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
+	vers = bpy.app.version
+	if vers[0] >= 3 or (vers[0] == 2 and vers[1] >= 80):
+		bpy.ops.object.move_to_collection(collection_index = inde)
 
-def Text(text = "", name = "", conv = True, mate = True):
+def Text(text = "", name = "", conv = True, mate = True, inde = 1):
 	import bpy
 	if text != "":
 		bpy.ops.object.text_add(radius=1, view_align=False, enter_editmode=False, location = (0.0, 0.0, 0.0), layers=(True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
@@ -1202,17 +2638,26 @@ def Text(text = "", name = "", conv = True, mate = True):
 			Mate(colo = (1.0, 1.0, 1.0), use_shadeless = True)
 		if name != "":
 			bpy.context.object.name = name
+		vers = bpy.app.version
+		if vers[0] >= 3 or (vers[0] == 2 and vers[1] >= 80):
+			bpy.ops.object.move_to_collection(collection_index = inde)
 
-def Came():
+def Came(inde = 1):
 	import bpy
 	bpy.ops.object.camera_add(view_align=True, enter_editmode=False, location=(0, 0, 10.0), rotation=(0.0, 0.0, 0.0), layers=(True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
+	vers = bpy.app.version
+	if vers[0] >= 3 or (vers[0] == 2 and vers[1] >= 80):
+		bpy.ops.object.move_to_collection(collection_index = inde)
 
-def Ligh(typ_ = 'POINT'):
+def Ligh(typ_ = 'POINT', inde = 1):
 	import bpy
 	bpy.ops.object.lamp_add(type = typ_, view_align=False, location=(0.0, 0.0, 0.0), layers=(True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
+	vers = bpy.app.version
+	if vers[0] >= 3 or (vers[0] == 2 and vers[1] >= 80):
+		bpy.ops.object.move_to_collection(collection_index = inde)
 
 # TODO: make work for different facing directions
-def VectDraw(vect, orig = (0.0, 0.0, 0.0), cyliScal = (0.4, 0.05, 0.05), coneScal = (0.1, 0.1, 0.1)):
+def VectDraw(vect, orig = (0.0, 0.0, 0.0), cyliScal = (0.4, 0.05, 0.05), coneScal = (0.1, 0.1, 0.1), inde = 1):
 	import bpy
 	Math = MathLink()
 	magn = Math.VectMagn(vect)
@@ -1254,6 +2699,9 @@ def VectDraw(vect, orig = (0.0, 0.0, 0.0), cyliScal = (0.4, 0.05, 0.05), coneSca
 	Name("vect")
 	# restore cursor location
 	Curs(curs)
+	vers = bpy.app.version
+	if vers[0] >= 3 or (vers[0] == 2 and vers[1] >= 80):
+		bpy.ops.object.move_to_collection(collection_index = inde)
 
 #############################################
 
@@ -1526,14 +2974,34 @@ def PolySeleRead():
 	return a
 
 # return an index list of selected vertices
-def VertListSele():
+def VertListSele(meth = 0):
 	import bpy
 	retu = []
-	a = 0
-	while a < len(bpy.context.object.data.vertices):
-		if bpy.context.object.data.vertices[a].select == True:
-			retu.append(a)
-		a += 1
+	# TODO: where else can this be used
+	if meth == 0:
+		try:
+			import numpy
+			leng = len(bpy.context.object.data.vertices)
+			sele = numpy.zeros(leng, dtype = bool)
+			bpy.context.object.data.vertices.foreach_get('select', sele)
+			rang = numpy.arange(leng, dtype = int)
+			retu = rang[sele]
+			retu = list(retu)
+			for a in range(len(retu)):
+				retu[a] = int(retu[a])
+		except:
+			meth = 1
+	if meth == 1:
+		retu = list(filter(lambda vert: vert.select, bpy.context.object.data.vertices))
+		for a in range(len(retu)):
+			retu[a] = retu[a].index
+	if meth == 2:
+		a = 0
+		while a < len(bpy.context.object.data.vertices):
+			if bpy.context.object.data.vertices[a].select == True:
+				retu.append(a)
+			a += 1
+	
 	return retu
 
 # get a list of all vertices connected to INDEX (slow)
@@ -1541,18 +3009,38 @@ def VertConn(inde):
 	import bpy
 	retu = []
 	if inde != -1:
+		"""
 		for edge in bpy.context.object.data.edges:
 			if edge.key[0] == inde or edge.key[1] == inde:
 				if edge.key[0] == inde:
 					retu.append(edge.key[1])
 				if edge.key[1] == inde:
 					retu.append(edge.key[0])
+		"""
+		# backup selection
+		sele = VertListSele()
+		VertSele([inde])
+		Edit()
+		bpy.ops.mesh.select_more(use_face_step = False)
+		Edit()
+		retu = VertListSele()
+		retu.remove(inde)
+		# restore selection
+		VertSele(sele)
 	return retu
 
 def Prin():
 	import bpy
 	for obje in bpy.context.scene.objects:
-		if obje.select == True:
+		sele = False
+		vers = bpy.app.version
+		if vers[0] >= 3 or (vers[0] == 2 and vers[1] >= 80):
+			if obje.select_get() == True:
+				sele = True
+		else:
+			if obje.select == True:
+				sele = True
+		if sele == True:
 			print(obje.name)
 
 def PrinVert():
@@ -1594,7 +3082,8 @@ def EdgeLoca(vert, edge):
 	return retu
 
 # pass a WORLD LOCATION and get back a vertex index for the selected object
-def VertIndeBy__Loca(loca):
+# TODO: slow
+def VertIndeBy__Loca(loca, exac = True):
 	import bpy
 	Math = MathLink()
 	tole = 0.0001
@@ -1609,9 +3098,10 @@ def VertIndeBy__Loca(loca):
 		a += 1
 	# get the clos EST index
 	retu, dist = Math.VectClos(loca, lis_)
-	# if theyre not exactly the same, return not found
-	if dist > tole:
-		retu = -1
+	# if theyre not exactly the same (and exac is True), return not found
+	if exac == True:
+		if dist > tole:
+			retu = -1
 	return retu
 
 # read a local location and return world space
@@ -1855,7 +3345,8 @@ def PolyList():
 	while a < len(bpy.context.object.data.polygons):
 		retu.append(PolyVert(a))
 		a += 1
-	return retu
+	# TODO: update
+	return tuple(retu)
 
 def Down():
 	return [VertList(), EdgeList(), PolyList()]
@@ -2097,6 +3588,14 @@ def Rend(imag):
 	retu += " " + imag
 	retu += " -f"
 	retu += " 1"
+	return retu
+
+def RendVide(vide, end_):
+	retu = " -o"
+	retu += " " + vide
+	retu += " -F AVIJPEG"
+	#retu += " -a [1," + str(end_) + "]"
+	retu += " -a"
 	return retu
 
 # TODO: see if a python expression can still be constructed in windows by adding a quote at the beginning and end
