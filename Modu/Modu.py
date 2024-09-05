@@ -7,8 +7,6 @@ import functools
 # USER VARS
 
 mainDire = os.path.expanduser("~") + os.sep
-if os.name == 'nt':
-	mainDire += "OneDrive" + os.sep
 mainDire += "Documents" + os.sep + "prog" + os.sep
 moduDire = mainDire + "Modu" + os.sep
 pythDire = mainDire + "Pyth" + os.sep
