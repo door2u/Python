@@ -316,6 +316,9 @@ def VectAver(vectList):
 		a += 1
 	if a != 0:
 		retu = VectScal(retu, 1.0 / a)
+	#if a != 0:
+	#	for b in range(len(retu)):
+	#		retu[b] /= a - 0
 	return tuple(retu)
 
 # convert a list or tuple of radian angles to a tuple of degree angles
