@@ -1,11 +1,7 @@
 import importlib.util
 import os
 
-path = os.path.expanduser("~") + os.sep
-if os.name == 'nt':
-	path += "OneDrive" + os.sep
-path += "Documents" + os.sep + "prog" + os.sep + "Modu" + os.sep + "Modu.py"
-
+path = os.path.expanduser("~") + os.sep + "Documents" + os.sep + "prog" + os.sep + "Modu" + os.sep + "Modu.py"
 spec = importlib.util.spec_from_file_location("Modu", path)
 Modu = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(Modu)
@@ -27,10 +23,12 @@ def main():
 
 	if make == True:
 
-		fileCoun = 1
+		fileCoun = 1000
 
-		scriList = [Gene.Tree()]
+		#scriList = [Gene.Tree()]
 		#scriList = [Gene.TreeSimp()]
+		#scriList = [Gene.Pose()]
+		scriList = [Gene.Anim()]
 
 		Gene.Make(scriList = scriList, fileCoun = fileCoun, incr = incr, rend = rend)
 

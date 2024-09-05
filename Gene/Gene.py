@@ -26,6 +26,18 @@ class Tree():
 	dire = "flor" + os.sep + "tree" + os.sep
 	scri = "flor" + os.sep + "tree" + os.sep + "tree"
 
+class Pose():
+	import os
+	pref = "pose"
+	dire = "pose" + os.sep
+	scri = "pose" + os.sep + "pose"
+
+class Anim():
+	import os
+	pref = "anim"
+	dire = "anim" + os.sep
+	scri = "anim" + os.sep + "anim"
+
 def Make(scriList = [], fileCoun = 1, incr = True, rend = True):
 
 	# TODO:
@@ -90,8 +102,10 @@ def Make(scriList = [], fileCoun = 1, incr = True, rend = True):
 
 			# read random min/max range for different parameters
 			para = Pyth.FileTo__Line(dire + pref + "_para")
-			para = Pyth.LineTo__Dict(para)
-			para = ParaInit(para)
+			# TODO: how should this really be done
+			if para != ['']:
+				para = Pyth.LineTo__Dict(para)
+				para = ParaInit(para)
 
 			# new file path
 			vari = {"path":out_ + pref + "_" + numb + ".blend"}
@@ -134,7 +148,8 @@ def Make(scriList = [], fileCoun = 1, incr = True, rend = True):
 			if rend == True:
 				imag = geneDire + dire + "out_" + os.sep + pref + "_" + numb
 				syst = Blen.Batc(dire + "out_" + os.sep + pref + "_" + numb + ".blend")
-				syst += Blen.Rend(imag)
+				#syst += Blen.Rend(imag)
+				syst += Blen.RendVide(imag, 24)
 				os.system(syst)
 
 			iden[pref] += 1
