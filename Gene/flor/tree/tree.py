@@ -1,10 +1,7 @@
 import importlib.util
 import os
 
-path = os.path.expanduser("~") + os.sep
-if os.name == 'nt':
-	path += "OneDrive" + os.sep
-path += "Documents" + os.sep + "prog" + os.sep + "Modu" + os.sep + "Modu.py"
+path = os.path.expanduser("~") + os.sep + "Documents" + os.sep + "prog" + os.sep + "Modu" + os.sep + "Modu.py"
 spec = importlib.util.spec_from_file_location("Modu", path)
 Modu = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(Modu)
@@ -210,7 +207,7 @@ def Bran(vertList = [], edgeList = [], branList = [], tape = 1.0, trun = True):
 				else:
 					Blen.Sele("tree")
 					Blen.Join("BezierCurve")
-		if len(branList) > 7000:
+		if len(branList) > 5000:
 			print()
 			print("exiting")
 			print()

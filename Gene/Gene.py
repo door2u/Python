@@ -38,6 +38,12 @@ class Anim():
 	dire = "anim" + os.sep
 	scri = "anim" + os.sep + "anim"
 
+class Jog_():
+	import os
+	pref = "jog_"
+	dire = "jog_" + os.sep
+	scri = "jog_" + os.sep + "jog_"
+
 def Make(scriList = [], fileCoun = 1, incr = True, rend = True):
 
 	# TODO:
@@ -148,8 +154,10 @@ def Make(scriList = [], fileCoun = 1, incr = True, rend = True):
 			if rend == True:
 				imag = geneDire + dire + "out_" + os.sep + pref + "_" + numb
 				syst = Blen.Batc(dire + "out_" + os.sep + pref + "_" + numb + ".blend")
+				# TODO: render image / video option
 				#syst += Blen.Rend(imag)
-				syst += Blen.RendVide(imag, 24)
+				#syst += Blen.RendVide(imag, 24)
+				syst += Blen.RendVide(imag, 30)
 				os.system(syst)
 
 			iden[pref] += 1

@@ -67,7 +67,7 @@ def main():
 
 	# count number of files in library
 	# TODO: pass directory
-	librDire = os.expand_user("~") + os.sep + "Documents" + os.sep + "prog" + os.sep + "Gene" + os.sep + "pose" + os.sep + "libr" + os.sep
+	librDire = os.path.expanduser("~") + os.sep + "Documents" + os.sep + "prog" + os.sep + "Gene" + os.sep + "pose" + os.sep + "libr" + os.sep
 	fileList = os.listdir(librDire)
 	fileCoun = len(fileList) / 3 - 1
 	random.seed()
@@ -164,7 +164,7 @@ def main():
 	paraDict.update({"ran1": ran1})
 	paraDict.update({"ran2": ran2})
 	paraDict.update({"conf": conf})
-	direOut = dire + "out_" + os.sep + "anim_" + numb + "_para"
+	direOut = dire + "out_" + os.sep + pref + "_" + numb + "_para"
 	Gene.ParaWrit(para = paraDict, dire = direOut, exte = exte)
 
 	bpy.ops.wm.save_as_mainfile(filepath = dire + "out_" + os.sep + pref + "_" + numb + ".blend")

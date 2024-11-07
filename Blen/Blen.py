@@ -5,6 +5,8 @@ def PythLink(Pyth = None):
 	return Pyth
 def MathLink(Math = None):
 	return Math
+def BlenGameLink(BlenGame = None):
+	return BlenGame
 def HeadLink(Head = None):
 	return Head
 def BlenCommLink(blenComm = None):
@@ -1649,19 +1651,13 @@ def ArmaVolu(modiName = "Armature"):
 	import bpy
 	bpy.context.object.modifiers[modiName].use_deform_preserve_volume = True
 
-def MarkRead(rig_List, boneName, charName = "", pref = "rig_", use_Inst = False):
+def MarkRead(rig_List, boneName, charName = "", pref = "rig_"):
 	for b in range(len(rig_List)):
 		inde, bone, side, inst = BoneNameSpli(rig_List[b][0])
 		indeComp, boneComp, sideComp, instComp = BoneNameSpli(boneName)
-		if bone == boneComp and side == sideComp:
-			if use_Inst == False or (use_Inst == True and inst == instComp):
-				break
-	retu = ""
-	if use_Inst == False:
-		retu = ConcList([charName, pref, inde, bone, side], emptList = ["", "", "-1", "", ""])
-	else:
-		retu = ConcList([charName, pref, inde, bone, side, inst], emptList = ["", "", "-1", "", "", "-1"])
-	return retu
+		if bone == boneComp and side == sideComp and inst == instComp:
+			break
+	return ConcList([charName, pref, inde, bone, side, inst], emptList = ["", "", "-1", "", "", "-1"])
 
 # override - markers are selected automatically. override automatic selection:
 # "rig_": select "rig_" marker
@@ -1830,19 +1826,19 @@ def SpliRead(charName = ""):
 	pareDict.update({charName + "." + "knee.r": charName + "." + "hip_.r"})
 	pareDict.update({charName + "." + "hip_.r": charName + "." + "body"})
 	flipList = []
-	flipList.append(False)
-	flipList.append(True)
-	flipList.append(False)
-	flipList.append(False)
-	flipList.append(True)
-	flipList.append(False)
-	flipList.append(False)
-	flipList.append(False)
-	flipList.append(True)
-	flipList.append(True)
-	flipList.append(False)
-	flipList.append(True)
-	flipList.append(True)
+	flipList.append([False, True])
+	flipList.append([False, True])
+	flipList.append([True, False])
+	flipList.append([True, False])
+	flipList.append([False, True])
+	flipList.append([True, False])
+	flipList.append([True, False])
+	flipList.append([True, False])
+	flipList.append([False, True])
+	flipList.append([False, True])
+	flipList.append([True, False])
+	flipList.append([False, True])
+	flipList.append([False, True])
 	return spliList, switList, pareDict, flipList
 
 def LoopList(mesh, spliList, rig_List, switList, charName = ""):
@@ -1881,8 +1877,14 @@ def MeshSpli(mesh, spliList, loopList, rig_List, flipList, charName = "", pref =
 		mark = MarkRead(rig_List, spli, charName = charName, pref = pref)
 		# split
 		MeshSpliPart(mesh, spli, mark, loopList[a], charName = charName)
-		BallAnd_Sock(mesh, mark, loopList[a], flip = flipList[a])
-		BallAnd_Sock(spli, mark, loopList[a], flip = flipList[a])
+		# socket
+		sock = True
+		# TODO: assumes 0 is the head
+		if a == 0:
+			sock = not sock
+		BallAnd_Sock(mesh, mark, loopList[a], sock = sock, flip = flipList[a][0])
+		# ball
+		BallAnd_Sock(spli, mark, loopList[a], sock = not sock, flip = flipList[a][1])
 		print("split", a + 1, "of", len(spliList))
 
 def MeshSpliPart(copy, spli, mark, vertList, charName = ""):
@@ -1932,7 +1934,7 @@ def MeshSpliPart(copy, spli, mark, vertList, charName = ""):
 	Name(spli)
 	MatePurgObje()
 
-def BallAnd_Sock(part, mark, vertList, flip = False):
+def BallAnd_Sock(part, mark, vertList, sock = False, flip = False):
 	import bpy
 	Math = MathLink()
 	Sele(part)
@@ -2019,10 +2021,9 @@ def BallAnd_Sock(part, mark, vertList, flip = False):
 		for a in range(len(Polygons())):
 			if bpy.context.object.data.polygons[a].select == True:
 				sele.append(a)
-	mateName = -1
+	mateSlot = -1
 	if len(sele) > 0:
-		mateName = bpy.context.object.data.polygons[sele[0]].material_index
-		mateName = bpy.context.object.material_slots[mateName].material.name
+		mateSlot = bpy.context.object.data.polygons[sele[0]].material_index
 	Edit()
 	bpy.ops.mesh.select_less()
 	Edit()
@@ -2083,13 +2084,8 @@ def BallAnd_Sock(part, mark, vertList, flip = False):
 	vers = bpy.app.version
 	if vers[0] >= 3 or (vers[0] == 2 and vers[1] >= 80):
 		bpy.ops.object.move_to_collection(collection_index = 1)
-	# TODO: socket will be see-through in game mode unless the material is set to two-sided
 	if flip == True:
 		Flip()
-	if mateName != -1:
-		if len(bpy.context.object.material_slots) == 0:
-			bpy.ops.object.material_slot_add()
-		bpy.context.object.material_slots[0].material = bpy.data.materials[mateName]
 	Loca(cent)
 	new_Obje = bpy.context.object.name
 	# shade smooth
@@ -2101,6 +2097,31 @@ def BallAnd_Sock(part, mark, vertList, flip = False):
 	Join(new_Obje)
 	# remove doubles
 	VertDoub()
+	# flip the normals to the inside if the cap is a socket
+	# TODO: socket will be see-through in game mode unless the material is set to two-sided
+	if sock == True:
+		vertLocaList = []
+		for a in range(len(vertList)):
+			vertLocaList.append(VertIndeBy__Loca(vertList[a]))
+		VertSele(vertLocaList)
+		Loop()
+		Regi()
+		Edit()
+		bpy.ops.mesh.flip_normals()
+		Edit()
+		VertDese()
+	if mateSlot != -1:
+		vertLocaList = []
+		for a in range(len(vertList)):
+			vertLocaList.append(VertIndeBy__Loca(vertList[a]))
+		VertSele(vertLocaList)
+		Loop()
+		Regi()
+		Edit()
+		bpy.context.object.active_material_index = mateSlot
+		bpy.ops.object.material_slot_assign()
+		Edit()
+		VertDese()
 
 def MatePurgObje():
 	import bpy
@@ -2268,11 +2289,71 @@ def Key_Legs():
 
 # TODO: path_star
 
-def Cycl(name = "", trac = "axle.legs.l", t = 0.0, radi = 0.2, spee = 0.1, uppe = "", lowe = "", end = "", righ = False, arms = False, armsPath = True, armsRati = 0.05, uppeLeng = 1.0, loweLeng = 1.0, faci = (1.0, 0.0), path_star = 2):
+# storProp - set to True to store the cycle path in a property list (read from a file), otherwise write to a file
+def CyclPathRead(blenFile = "cycl_jog__legs", storProp = False, faci = (1.0, 0.0)):
+	import os
+	Pyth = PythLink()
+	Head = HeadLink()
+	blenComm = BlenCommLink()
+	dire, blenName = FilePath(blenFile)
+	# write the blend to read from a file
+	writ = {}
+	writ.update({"blenName":blenName})
+	writ.update({"faci":faci})
+	Pyth.LineTo__File(Pyth.DictTo__Line(writ), "list" + os.sep + "expo")
+	# write a script to be executed in a new instance of blender which writes the length and angle of each point from "path" object to a file
+	scri = Head()
+	scri += "def main():\n"
+	scri += "\timport bpy\n"
+	scri += "\timport math\n"
+	scri += "\tline = Pyth.FileTo__Line(\"list" + os.sep + "expo\")\n"
+	scri += "\tline = Pyth.LineTo__Dict(line)\n"
+	scri += "\tvertList = []\n"
+	#scri += "\tradiList = []\n"
+	scri += "\tBlen.Sele(\"path\")\n"
+	scri += "\tfor vert in bpy.context.object.data.vertices:\n"
+	#scri += "\t\tmagn = Math.VectMagn(vert.co)\n"
+	#scri += "\t\tangl = math.atan2(vert.co.z, vert.co.x)\n"
+	#scri += "\t\tif line[\"faci\"] == (0.0, 1.0) or line[\"faci\"] == (0.0, -1.0):\n"
+	#scri += "\t\t\tangl = math.atan2(vert.co.z, vert.co.y)\n"
+	#scri += "\t\twhile angl < 0.0:\n"
+	#scri += "\t\t\tangl += 2.0 * math.pi\n"
+	#scri += "\t\twhile angl >= 2.0 * math.pi:\n"
+	#scri += "\t\t\tangl -= 2.0 * math.pi\n"
+	#scri += "\t\tradiList.append((magn, angl))\n"
+	scri += "\t\tvertList.append(tuple(vert.co))\n"
+	#scri += "\tPyth.LineTo__File(Pyth.TuplListExpo(radiList), \"list\" + os.sep + line[\"blenName\"])\n"
+	scri += "\tPyth.LineTo__File(Pyth.TuplListExpo(vertList), \"list\" + os.sep + line[\"blenName\"])\n"
+	scri += "main()\n"
+	fileObje = open("tempScri.py", mode = "w")
+	fileObje.write(scri)
+	fileObje.close()
+	# write an expression to execute tempScri.py from the command line
+	expr = ""
+	expr += blenComm + " -b " + dire + blenName + ".blend"	
+	expr += " --python tempScri.py"
+	# execute
+	os.system(expr)
+	# if store as property option is true, store the vectors to properties
+	if storProp == True:
+		BlenGame = BlenGameLink()
+		line = Pyth.FileTo__Line("list" + os.sep + blenName)
+		for a in range(len(line)):
+			vert = Pyth.StriTo__Tupl(line[a])
+			BlenGame.Prop(propName = blenFile + "." + Pad_(a) + "." + "x", propType = 'FLOAT', propValu = vert[0])
+			BlenGame.Prop(propName = blenFile + "." + Pad_(a) + "." + "y", propType = 'FLOAT', propValu = vert[1])
+			BlenGame.Prop(propName = blenFile + "." + Pad_(a) + "." + "z", propType = 'FLOAT', propValu = vert[2])
+			#radi = Pyth.StriTo__Tupl(line[a])
+			#BlenGame.Prop(propName = blenFile + "." + Pad_(a) + "." + "magn", propType = 'FLOAT', propValu = radi[0])
+			#BlenGame.Prop(propName = blenFile + "." + Pad_(a) + "." + "angl", propType = 'FLOAT', propValu = radi[1])
+
+# TODO: end is not being used. use end or length?
+def Cycl(name = "", axle = "axle.legs.l", t = 0.0, radi = 0.2, spee = 0.1, uppe = "", lowe = "", end_ = "", righ = False, arms = False, armsPath = True, armsRati = 0.05, uppeLeng = 1.0, loweLeng = 1.0, faci = (1.0, 0.0), pathStar = 2, path = [], pathName = "cycl_jog__legs", steps = 32):
 	import bpy
 	import math
 	import mathutils
 	Math = MathLink()
+	#print("ar", armsRati)
 	part = "axle."
 	if arms == 0:
 		part += "legs."
@@ -2288,21 +2369,29 @@ def Cycl(name = "", trac = "axle.legs.l", t = 0.0, radi = 0.2, spee = 0.1, uppe 
 		part += "r"
 		if arms == True:
 			phas = -math.pi / 1.0
+	#print("phas", phas)
 	nameStri = name + "." + part
 	if arms == False or (arms == True and armsPath == True):
 		#peda = CyclPath(t = t, acti = acti, spee = spee, radi = radi, phas = phas, righ = righ, arms = arms)
 		left = 1
 		if righ == True:
 			left = 0
-		peda = cycle_path(t, spee, radi, phas, 16, left, 0, path_star)
+		if path != []:
+			steps = len(path)
+		# TODO: how to rebuild a loop
+		steps = 16
+		#print(steps)
+		peda = CyclPath(t, spee, radi, phas, steps, left, 0, pathStar, charName = name, pathName = pathName, path = path, faci = faci)
 		#print(peda)
 	else:
+		#print("ar", armsRati)
+		# TODO: why -t
 		peda = Math.Elli(t = -t, spee = spee, radi = radi, phas = phas, rati = armsRati)
 	peda = Math.VectScal(peda, radi)
-	#tracPosi = scen.objects[trac].localPosition
-	Sele(trac)
-	tracPosi = LocaRead()
-	#print(tracPosi)
+	#axlePosi = scen.objects[axle].localPosition
+	Sele(axle)
+	axlePosi = LocaRead()
+	#print(axlePosi)
 	tota = uppeLeng + loweLeng
 	# the distance from hip where the foot should be
 	#uppePosi = scen.objects[uppe].localPosition
@@ -2311,9 +2400,9 @@ def Cycl(name = "", trac = "axle.legs.l", t = 0.0, radi = 0.2, spee = 0.1, uppe 
 	#print(uppePosi)
 	# TODO: convert x/y to x using faci
 	uppePosi = (uppePosi[0], 0.0, uppePosi[2])
-	targPosi = (peda[0] + tracPosi[0], 0.0, peda[1] + tracPosi[2])
+	targPosi = (peda[0] + axlePosi[0], 0.0, peda[1] + axlePosi[2])
 	#uppePosi = (0.0, uppePosi[1], uppePosi[2])
-	#targPosi = (0.0, peda[0] + tracPosi[1], peda[1] + tracPosi[2])
+	#targPosi = (0.0, peda[0] + axlePosi[1], peda[1] + axlePosi[2])
 	difx = targPosi[0] - uppePosi[0]
 	dify = targPosi[2] - uppePosi[2]
 	angl = math.atan2(dify, difx) + math.pi / 2.0
@@ -2336,34 +2425,45 @@ def Cycl(name = "", trac = "axle.legs.l", t = 0.0, radi = 0.2, spee = 0.1, uppe 
 	RotaSet_((math.degrees(faci[1] * loweAngl), math.degrees(-faci[0] * loweAngl), 0.0))
 	#RotaSet_((faci[1] * loweAngl, -faci[0] * loweAngl, 0.0))
 
-# TODO: this might be converting to an angle then back to x and y
-def cycle_path(t, speed, radius, phase, steps, left, arms, start):
+# TODO: make an interpolate function. (incremented and non-incremented interpolate)
+# (rigging / skinning)
+# incr = shif[1] / cuttDiff
+# heig = star[2] - star[2] * incr + end_[2] * incr
+
+"""
+def CyclPath(t, speed, radius, phase, steps, left, arms, start, path = [], pathName = "cycl_jog__legs", charName = "beam", faci = (1.0, 0.0)):
 	import bpy
 	import math
 	Math = MathLink()
-	start = 0
+	#start = 0
 	# TODO
+	# is this where phase goes?
+	# should t be going forward or backward?
 	pedal_speed = speed
 	ground_height = 0.0
-	#y = math.sin(t * 2.0 * math.pi * pedal_speed)
-	#x = math.cos(t * 2.0 * math.pi * pedal_speed)
-	# TODO: fix this
-	y = math.sin(-t * 2.0 * math.pi * pedal_speed)
-	x = math.cos(-t * 2.0 * math.pi * pedal_speed)
+	y = math.sin(t * 2.0 * math.pi * pedal_speed + phase)
+	x = math.cos(t * 2.0 * math.pi * pedal_speed + phase)
+	# TODO:
+	# fix this?
+	# is this where phase goes?
+	#x = math.cos(-t * 2.0 * math.pi * pedal_speed + phase)
+	#y = math.sin(-t * 2.0 * math.pi * pedal_speed + phase)
 	# TODO
-	if left == 1 and arms == 0 and 1 == 0:
-	#if left == 1 and arms == 0:
-		Sele("Sphere")
-		loc = (x, y, 0.0)
-		Loca(loc)
-		bpy.ops.anim.keyframe_insert(type='Location', confirm_success=False)
+	#if left == 1 and arms == 0 and 1 == 0:
+	##if left == 1 and arms == 0:
+	#	Sele("Sphere")
+	#	loc = (x, y, 0.0)
+	#	Loca(loc)
+	#	bpy.ops.anim.keyframe_insert(type='Location', confirm_success=False)
 	angle = math.atan2(y, x)
+	#angle = t * 2.0 * math.pi * pedal_speed + phase
 	#print("angle", math.degrees(angle))
-	angle += phase
+	#angle += phase
 	while angle < 0.0:
 		angle += 2.0 * math.pi
 	while angle >= 2.0 * math.pi:
 		angle -= 2.0 * math.pi
+	# TODO: this isnt correct. need to get the angle to each point
 	step = int((angle / (2.0 * math.pi)) * (steps - 0))
 	#print("step", step)
 	# TODO: step, next_step, adjust both if necessary
@@ -2384,14 +2484,40 @@ def cycle_path(t, speed, radius, phase, steps, left, arms, start):
 	# for non-adjusted angle, the ratio of progress (a) to a full step (b)
 	progress = angle_remainder / astep
 	# TODO: bad way to do this
-	Sele("path")
+	#Sele("path")
 	# TODO: x and z or y and z or x and y
-	#start_x = bpy.context.object.data.vertices[step].co.y
-	start_x = bpy.context.object.data.vertices[step].co.x
-	start_y = bpy.context.object.data.vertices[step].co.z
-	#end_x = bpy.context.object.data.vertices[next_step].co.y
-	end_x = bpy.context.object.data.vertices[next_step].co.x
-	end_y = bpy.context.object.data.vertices[next_step].co.z
+	##start_x = bpy.context.object.data.vertices[step].co.y
+	#start_x = bpy.context.object.data.vertices[step].co.x
+	#start_y = bpy.context.object.data.vertices[step].co.z
+	##end_x = bpy.context.object.data.vertices[next_step].co.y
+	#end_x = bpy.context.object.data.vertices[next_step].co.x
+	#end_y = bpy.context.object.data.vertices[next_step].co.z
+	# TODO: test this
+	# if faci is default, read x/z
+	dimlInte = 0
+	dimhInte = 2
+	dimlStri = "x"
+	dimhStri = "z"
+	# if faci is not default, read y/z
+	if faci == (0.0, 1.0) or faci == (0.0, -1.0):
+		dimlInte = 1
+		dimlStri = "y"
+	if path != []:
+		start_x = path[step][dimlInte]
+		start_y = path[step][dimhInte]
+		end_x = path[next_step][dimlInte]
+		end_y = path[next_step][dimhInte]
+	else:
+		# TODO:
+		Sele(charName)
+		# TODO: read vari name from a single location
+		variName = pathName + "." + Pad_(step)
+		start_x = bpy.context.object.properties[variName + "." + dimlStri]
+		start_y = bpy.context.object.properties[variName + "." + dimhStri]
+		variName = pathName + "." + Pad_(next_step)
+		end_x = bpy.context.object.properties[variName + "." + dimlStri]
+		end_y = bpy.context.object.properties[variName + "." + dimhStri]
+
 	# angle from origin to x,y start of this step
 	theta_a = math.atan2(start_y, start_x)
 	while theta_a < 0.0:
@@ -2412,14 +2538,12 @@ def cycle_path(t, speed, radius, phase, steps, left, arms, start):
 	# get the difference between the new angle and min angle
 	# angle between this step and the next step
 	# TODO:
-	"""
-	if step != steps - 1:
-		angle_diff = theta_b - theta_a
-	else:
-		angle_diff = 2.0 * math.pi - theta_a
-	#while angle_diff >= 2.0 * math.pi:
-	#	angle_diff -= 2.0 * math.pi
-	"""
+	#if step != steps - 1:
+	#	angle_diff = theta_b - theta_a
+	#else:
+	#	angle_diff = 2.0 * math.pi - theta_a
+	##while angle_diff >= 2.0 * math.pi:
+	##	angle_diff -= 2.0 * math.pi
 	angle_diff = Math.VectAngl((start_x, start_y), (end_x, end_y))
 	angle_diff = math.radians(angle_diff)
 	# TODO: this worked, then it didn't work. related to applying path rotation, previously 180.
@@ -2434,6 +2558,7 @@ def cycle_path(t, speed, radius, phase, steps, left, arms, start):
 	progress *= angle_diff
 	# add adjusted progress to theta a, the start of this step
 	theta_a += progress
+
 	# TODO: is this right?
 	x = math.cos(theta_a)
 	y = math.sin(theta_a)
@@ -2442,7 +2567,6 @@ def cycle_path(t, speed, radius, phase, steps, left, arms, start):
 	#x = radius * math.cos(theta_a)
 	#y = radius * math.sin(theta_a)
 	# new radius: intersection between theta a and line from start x y to end x y
-	#"""
 	m1 = (y / x)
 	b1 = 0.0
 	#print(end_x, start_x)
@@ -2450,22 +2574,89 @@ def cycle_path(t, speed, radius, phase, steps, left, arms, start):
 	b2 = (end_y) - m2 * (end_x)
 	X = (b2 - b1) / (m1 - m2)
 	Y = m1 * X
-	#"""
-	#X = x
-	#Y = y
-	#Sele("Sphere")
-	#bpy.data.objects["Sphere"].location[1] = X
-	#bpy.data.objects["Sphere"].location[2] = Y
-	#bpy.ops.anim.keyframe_insert(type='Location', confirm_success = False)
-	#if left == 1 and arms == 0:
-	if left == 1 and arms == 0 and 1 == 0:
-		Sele("Sphere")
-		loc = (X, Y, 0.0)
-		Loca(loc)
-		bpy.ops.anim.keyframe_insert(type='Location', confirm_success=False)
-	return X, Y
 
-#######################
+
+
+	##if left == 1 and arms == 0:
+	#if left == 1 and arms == 0 and 1 == 0:
+	#	Sele("Sphere")
+	#	loc = (X, Y, 0.0)
+	#	Loca(loc)
+	#	bpy.ops.anim.keyframe_insert(type='Location', confirm_success=False)
+	return X, Y
+"""
+
+def CyclPath(t, speed, radius, phase, steps, left, arms, start, path = [], pathName = "cycl_jog__legs", charName = "beam", faci = (1.0, 0.0)):
+	import bpy
+	import math
+	Math = MathLink()
+	#start = 0
+	# TODO
+	# is this where phase goes?
+	# should t be going forward or backward?
+	pedal_speed = speed
+	ground_height = 0.0
+	#y = math.sin(t * 2.0 * math.pi * pedal_speed + phase)
+	#x = math.cos(t * 2.0 * math.pi * pedal_speed + phase)
+	y = math.sin(t * 2.0 * math.pi * pedal_speed)
+	x = math.cos(t * 2.0 * math.pi * pedal_speed)
+	angle = math.atan2(y, x)
+	angle += phase
+	while angle < 0.0:
+		angle += 2.0 * math.pi
+	while angle >= 2.0 * math.pi:
+		angle -= 2.0 * math.pi
+	step = int((angle / (2.0 * math.pi)) * (steps))
+	# TODO: does this work?
+	step += start
+	next_step = step + 1
+	if step >= steps:
+		step -= steps
+	if next_step >= steps:
+		next_step -= steps
+	# TODO: find a better way to do this
+	astep = 2.0 * math.pi / steps
+	# find the angle remainder
+	angle_remainder = angle
+	while angle_remainder >= astep:
+		angle_remainder -= astep
+	# for non-adjusted angle, the ratio of progress (a) to a full step (b)
+	progress = angle_remainder / astep
+	
+	# TODO: test this
+	# if faci is default, read x/z
+	dimlInte = 0
+	dimhInte = 2
+	dimlStri = "x"
+	dimhStri = "z"
+	# if faci is not default, read y/z
+	if faci == (0.0, 1.0) or faci == (0.0, -1.0):
+		dimlInte = 1
+		dimlStri = "y"
+	if path != []:
+		start_x = path[step][dimlInte]
+		start_y = path[step][dimhInte]
+		end_x = path[next_step][dimlInte]
+		end_y = path[next_step][dimhInte]
+	else:
+		# TODO:
+		Sele(charName)
+		# TODO: read vari name from a single location
+		variName = pathName + "." + Pad_(step)
+		start_x = bpy.context.object.properties[variName + "." + dimlStri]
+		start_y = bpy.context.object.properties[variName + "." + dimhStri]
+		variName = pathName + "." + Pad_(next_step)
+		end_x = bpy.context.object.properties[variName + "." + dimlStri]
+		end_y = bpy.context.object.properties[variName + "." + dimhStri]
+
+	# draw a vector from start to end
+	vect = Math.Vect((start_x, start_y), (end_x, end_y))
+	# scale the vector by progress
+	vect = Math.VectScal(vect, progress)
+	# add to start
+	vect = Math.VectAdd_((start_x, start_y), vect)
+	return vect
+#"""
 
 ####################################
 
@@ -3389,7 +3580,10 @@ def Impo(blenFile = "", pref = "", rena = "", ligh = False, came = False, scal =
 	writ.update({"dire":dire})
 	writ.update({"ligh":ligh})
 	writ.update({"came":came})
-	Pyth.LineTo__File(Pyth.DictTo__Line(writ), "list" + os.sep + "expo")
+	# TODO: update
+	# TODO: tempscri needs to know where to find the variables
+	#Pyth.LineTo__File(Pyth.DictTo__Line(writ), "list" + os.sep + "expo")
+	Pyth.LineTo__File(Pyth.DictTo__Line(writ), "list" + os.sep + blenName)
 
 	expr = ""
 	expr += blenComm + " -b " + dire + blenName + ".blend"	
@@ -3397,7 +3591,8 @@ def Impo(blenFile = "", pref = "", rena = "", ligh = False, came = False, scal =
 
 	scri = Head()
 	scri += "def main():\n"
-	scri += "\tline = Pyth.FileTo__Line(\"list" + os.sep + "expo\")\n"
+	#scri += "\tline = Pyth.FileTo__Line(\"list" + os.sep + "expo\")\n"
+	scri += "\tline = Pyth.FileTo__Line(\"list" + os.sep + blenName + "\")\n"
 	scri += "\tline = Pyth.LineTo__Dict(line)\n"
 	scri += "\tBlen.Expo(listName = line[\"blenName\"], ligh = line[\"ligh\"], came = line[\"came\"])\n"
 	scri += "main()\n"

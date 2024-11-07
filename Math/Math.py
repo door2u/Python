@@ -625,6 +625,551 @@ def Sphe(segs = 32, ring = 16, cent = (0.0, 0.0, 0.0), radi = 1.0, distCirc = Tr
 
 # SOLVING
 
+def Pop_(list, pop_List):
+	# sort
+	pop_List = sorted(pop_List)
+	# purge duplicates
+	a = len(pop_List) - 1
+	while a >= 1:
+		b = a - 1
+		while b >= 0:
+			if pop_List[a] == pop_List[b]:
+				pop_List.pop(a)
+				break
+			b -= 1
+		a -= 1
+	# pop
+	a = len(pop_List) - 1
+	while a >= 0:
+		list.pop(pop_List[a])
+		a -= 1
+	return list
+	
+
+def FactStri(inte):
+	return "!" + str(int(inte))
+
+# func: 0 for sine, 1 for cosine, 2 for arctangent
+# atan:
+# x - x**3/3 + x**5/5 - x**7/7 + x**9/9 + ...
+def SineTerm(coun = 6, func = 0, vari = "x"):
+	retu = Equa()
+	subt = False
+	for a in range(coun):
+		inte = int(2.0 * a)
+		if func == 0 or func == 2:
+			inte += 1
+		fact = FactStri(inte)
+		if func == 2:
+			fact = inte
+		term = Term([vari, fact])
+		term.expo[len(term.expo) - 2] *= inte
+		term.expo[len(term.expo) - 1] = -1
+		if subt == True:
+			term.valu *= -1.0
+		subt = not subt
+		retu.Appe(term)
+	return retu
+
+"""
+def AtanTerm(coun = 6, vari = "x"):
+	retu = Equa()
+	subt = False
+	for a in range(coun):
+		inte = int(2.0 * a)
+		#if cosi == False:
+		inte += 1
+		#fact = FactStri(inte)
+		term = Term([vari, inte])
+		term.expo[len(term.expo) - 2] *= inte
+		term.expo[len(term.expo) - 1] = -1
+		if subt == True:
+			term.valu *= -1.0
+		subt = not subt
+		retu.Appe(term)
+	return retu
+"""
+
+class Vari(list):
+	def __init__(self, pare, vari = None):
+		self.pare = pare
+		if type(vari) == str:
+			self.Appe(vari)
+		elif type(vari) == list:
+			for item in vari:
+				self.Appe(item)
+	def Appe(self, appe):
+		if (type(appe) == str and len(appe) > 0) or type(appe) == float or type(appe) == int:
+			if len(self) == 0 and self.pare.valu == 0.0:
+				self.pare.valu = 1.0
+			expo = self.pare.expo
+			#expo.insert(len(self)
+			expo.append(1)
+			if type(appe) == str:
+				if appe[0] == "-":
+					self.pare.valu *= -1.0
+					appe = appe[1:len(appe)]
+			orde = len(self)
+			#self.insert
+			self.append([appe, orde])
+	def Inse(self, inde, appe, expoInse = True):
+		if (type(appe) == str and len(appe) > 0) or type(appe) == float or type(appe) == int:
+			if expoInse == True:
+				expo = self.pare.expo
+				expo.insert(inde, 1)
+			if type(appe) == str:
+				if appe[0] == "-":
+					self.pare.valu *= -1.0
+					appe = appe[1:len(appe)]
+			#orde = inde
+			self.insert(inde, [appe, inde])
+			#self.append()
+
+	def Sort(self):
+		a = 0
+		while a < len(self) - 1:
+			if type(self[a][0]) == str and len(self[a][0]) > 0:
+				com1 = ""
+				com2 = ""
+				if type(self[a][0]) == str:
+					com1 = self[a][0][0]
+				# TODO: is this a typo?
+				#if type(self[a][0]) == str:
+				if type(self[a + 1][0]) == str:
+					com2 = self[a + 1][0][0]
+				typ_ = False
+				if type(self[a][0]) == type(self[a + 1][0]):
+					typ_ = True
+				matc = False
+				if (com1 != "!" and com2 != "!") or (com1 == "!" and com2 == "!"):
+					matc = True
+				unor = False
+				if typ_ and self[a + 1][0] < self[a][0]:
+					unor = True
+				if (matc and unor) or (com1 == "!" and com2 != "!"):
+					temp = self[a]
+					self[a] = self[a + 1]
+					self[a + 1] = temp
+					a = -1
+			a += 1
+		return self
+
+class Term:
+
+	def __init__(self, vari = None):
+		self.valu = 0.0
+		if type(vari) == float or type(vari) == int:
+			self.valu = vari
+		elif type(vari) == str:
+			self.valu = 1.0
+		self.expo = []
+		self.vari = Vari(self, vari)
+
+	def __add__(self, othe):
+		retu = Equa(self)
+		retu.Appe(othe)
+		retu.Clea()
+		return retu
+	def __iadd__(self, othe):
+		retu = Equa(self)
+		retu.Appe(othe)
+		retu.Clea()
+		return retu
+
+	def __sub__(self, othe):
+		if type(othe) == Term:
+			othe.valu *= -1.0
+		elif type(othe) == Equa:
+			for a in range(len(othe)):
+				othe[a].valu *= -1.0
+		retu = Equa(self)
+		retu.Appe(othe)
+		retu.Clea()
+		return retu
+	def __isub__(self, othe):
+		if type(othe) == Term:
+			othe.valu *= -1.0
+		elif type(othe) == Equa:
+			for a in range(len(othe)):
+				othe[a].valu *= -1.0
+		retu = Equa(self)
+		retu.Appe(othe)
+		retu.Clea()
+		return retu
+
+	#a * b
+
+	def TermMult(self, term):
+		retu = self.Copy()
+		leng = len(retu.vari)
+		for a in range(len(term.vari)):
+			retu.vari.Appe(term.vari[a][0])
+			retu.expo[leng + a] = term.expo[a]
+		retu.Sort()
+		retu.Orde()
+		retu.valu = self.valu * term.valu
+		return retu
+
+	def __mul__(self, othe):
+		if type(othe) == Term:
+			retu = self.TermMult(othe)
+			retu = Equa(retu)
+		elif type(othe) == Equa:
+			retu = othe.Copy()
+			retu *= self
+		retu.Clea()
+		return retu
+
+	# *=
+	def __imul__(self, othe):
+		if type(othe) == Term:
+			retu = self.TermMult(othe)
+			retu = Equa(retu)
+		elif type(othe) == Equa:
+			retu = othe.Copy()
+			retu *= self
+		retu.Clea()
+		return retu
+
+	
+
+	def Clea(self):
+		self.Sort()
+		self.Simp()
+		self.Orde()
+
+	def Sort(self):
+		self.vari.Sort()
+		self.SortExpo()
+
+	def SortExpo(self):
+		expo = []
+		for a in range(len(self.vari)):
+			expo.append(self.expo[self.vari[a][1]])
+		self.expo = expo[:]
+
+	def Simp(self):
+		self.SimpExpo()
+		self.SimpVari()
+		self.SimpFact()
+		self.SimpFloa()
+
+	def SimpExpo(self):
+		for a in range(len(self.vari)):
+			if self.expo[a] == 0:
+				self.vari[a][0] = 1
+				self.expo[a] = 1
+		return self
+
+	# ie a^1*a^1 -> a^2
+	def SimpVari(self):
+		pop_List = []
+		for a in range(len(self.vari) - 1):
+			for b in range(a + 1, len(self.vari)):
+				#if self.var[a][0] == self.vari[b][0]:
+				if self.vari[a][0] == self.vari[b][0]:
+					self.expo[a] += self.expo[b]
+					pop_List.append(b)
+		self.Pop_(pop_List)
+		return self
+
+	def SimpFact(self):
+		for a in range(len(self.vari)):
+			if type(self.vari[a][0]) == str and len(self.vari[a][0]) > 1:
+				if self.vari[a][0][0] == "!":
+					if len(self.vari[a][0]) == 2 and (self.vari[a][0][1] == "0" or self.vari[a][0][1] == "1"):
+						self.vari[a][0] = 1.0
+					elif len(self.vari[a][0]) == 2 and self.vari[a][0][1] == "2":
+						self.vari[a][0] = 2.0
+					else:
+						valu = 1.0
+						fact = self.vari[a][0][1:len(self.vari[a][0])]
+						fact = int(fact)
+						if fact > 1:
+							for b in range(2, fact + 1):
+								valu *= b
+						self.vari[a][0] = valu
+		return self
+
+	def SimpFloa(self):
+		pop_List = []
+		for a in range(len(self.vari)):
+			valu = self.vari[a][0]
+			if type(valu) == float or type(valu) == int:
+				valu = valu ** self.expo[a]
+				self.valu *= valu
+				pop_List.append(a)
+		self.Pop_(pop_List)
+		return self
+
+	def Pop_(self, pop_List):
+		self.vari = Pop_(self.vari, pop_List)
+		self.expo = Pop_(self.expo, pop_List)
+		return self
+
+	def Copy(self):
+		import copy
+		retu = Term()
+		retu.valu = copy.deepcopy(self.valu)
+		retu.vari = copy.deepcopy(self.vari)
+		retu.expo = copy.deepcopy(self.expo)
+		retu.vari.pare = retu
+		return retu
+
+	def Orde(self):
+		for a in range(len(self.vari)):
+			term = self.Copy()
+			vari = Vari(term)
+			vari.Appe(self.vari[a][0])
+			if len(vari) > 0:
+				self.vari.pop(a)
+				self.vari.Inse(a, vari[0][0], expoInse = False)
+		return self
+
+	def Prin(self):
+		prin = []
+		for a in range(len(self.vari)):
+			prin.append(self.vari[a][0])
+			prin.append(self.expo[a])
+		print(prin, self.valu)
+
+class Equa(list):
+
+	def __init__(self, init = None):
+		if init == None:
+			init = Term()
+		self.Appe(init)
+
+	def Appe(self, appe):
+		if type(appe) == Term:
+			self.append(appe)
+		elif type(appe) == Equa:
+			for a in range(len(appe)):
+				self.append(appe[a])
+
+	def __add__(self, othe):
+		retu = self.Copy()
+		if type(othe) == Term:
+			retu = othe + retu
+		elif type(othe) == Equa:
+			for a in range(len(othe)):
+				retu = othe[a] + retu
+		retu.Clea()
+		return retu
+
+	def __iadd__(self, othe):
+		retu = self.Copy()
+		if type(othe) == Term:
+			retu = othe + retu
+		elif type(othe) == Equa:
+			for a in range(len(othe)):
+				retu = othe[a] + retu
+		retu.Clea()
+		return retu
+
+	def __sub__(self, othe):
+		retu = self.Copy()
+		if type(othe) == Term:
+			retu = othe - retu
+		elif type(othe) == Equa:
+			for a in range(len(othe)):
+				retu = othe[a] - retu
+		retu.Clea()
+		return retu
+	def __isub__(self, othe):
+		retu = self.Copy()
+		if type(othe) == Term:
+			retu = othe - retu
+		elif type(othe) == Equa:
+			for a in range(len(othe)):
+				retu = othe[a] - retu
+		retu.Clea()
+		return retu
+
+	def __mul__(self, othe):
+		retu = Equa()
+		if type(othe) == Term:
+			for a in range(len(self)):
+				retu += self[a] * othe
+		elif type(othe) == Equa:
+			for a in range(len(self)):
+				for b in range(len(othe)):
+					retu += self[a] * othe[b]
+		retu.Clea()
+		return retu
+
+	def __imul__(self, othe):
+		retu = Equa()
+		if type(othe) == Term:
+			for a in range(len(self)):
+				retu += self[a] * othe
+		elif type(othe) == Equa:
+			for a in range(len(self)):
+				for b in range(len(othe)):
+					retu += self[a] * othe[b]
+		retu.Clea()
+		return retu
+
+	def __truediv__(self, othe):
+		retu = Equa()
+		if type(othe) == Term:
+			for a in range(len(self)):
+				retu += self[a] / othe
+		elif type(othe) == Equa:
+			for a in range(len(self)):
+				for b in range(len(othe)):
+					retu += self[a] / othe[b]
+		retu.Clea()
+		return retu
+	def __itruediv__(self, othe):
+		retu = Equa()
+		if type(othe) == Term:
+			for a in range(len(self)):
+				retu += self[a] / othe
+		elif type(othe) == Equa:
+			for a in range(len(self)):
+				for b in range(len(othe)):
+					retu += self[a] / othe[b]
+		retu.Clea()
+		return retu
+
+	def Subs(self, vari, equa):
+		retu = Equa()
+		add_List = []
+		for a in range(len(self)):
+			term = self[a].Copy()
+			othe = Term()
+			othe.valu = term.valu
+			expo = 0
+			valu = 1.0
+			foun = False
+			for b in range(len(term.vari)):
+				if term.vari[b][0] == vari:
+					valu = term.valu
+					expo = term.expo[b]
+					foun = True
+				else:
+					othe.vari.Appe(term.vari[b][0])
+					othe.expo[len(othe.expo) - 1] = term.expo[b]
+			if foun == True:
+				equ2 = equa.Copy()
+				for b in range(1, expo):
+					equ2 *= equa
+				if expo == 0:
+					term = Term()
+					term.valu = 1.0
+					equ2 = Equa(term)
+				retu += equ2 * othe
+			else:
+				add_List.append(a)
+		for a in range(len(add_List)):
+			retu.Appe(self[add_List[a]].Copy())
+		return retu
+					
+
+	def Clea(self):
+		self.Sort()
+		self.Simp()
+		self.Orde()
+
+	def Sort(self):
+		for a in range(len(self)):
+			self[a].Sort()
+		return self
+
+	
+
+	def Simp(self):
+		for a in range(len(self)):
+			self[a].Simp()
+		self.Orde()
+
+		self.SimpSums()
+		self.SimpNume()
+		self.SimpZero()
+
+	# a*b + a*b -> 2*a*b
+	def SimpSums(self):
+		pop_List = []
+		for a in range(len(self) - 1):
+			for b in range(a + 1, len(self)):
+				#variPop_List = []
+				if (self[a].vari == self[b].vari):
+					if (self[a].expo == self[b].expo):
+						self[a].valu += self[b].valu
+						pop_List.append(b)
+		self = Pop_(self, pop_List)
+		return self
+
+	def SimpNume(self):
+		pop_List = []
+		firs = -1
+		for a in range(len(self)):
+			if len(self[a].vari) == 0:
+				if firs == -1:
+					firs = a
+				else:
+					self[firs].valu += self[a].valu
+					pop_List.append(a)
+		self = Pop_(self, pop_List)
+		return self
+
+	def SimpZero(self):
+		pop_List = []
+		for a in range(len(self)):
+			if self[a].valu == 0.0:
+				pop_List.append(a)
+		self = Pop_(self, pop_List)
+		return self
+
+	def Orde(self):
+		#retu = self.Copy()
+		for a in range(len(self)):
+			self[a].Orde()
+		return self
+
+	def Copy(self):
+		for a in range(len(self)):
+			self[a].Copy()
+		return self
+
+	def Prin(self):
+		if len(self) == 0:
+			print("[]")
+		else:
+			for a in range(len(self)):
+				self[a].Prin()
+
+	def PrinStri(self):
+		retu = ""
+		if len(self) > 0:
+			for a in range(len(self)):
+				retu += str(self[a].valu)
+				if len(self[a].vari) > 0:
+					retu += "*"
+				for b in range(len(self[a].vari)):
+					vari = self[a].vari[b][0]
+					if type(vari) != str:
+						vari = str(vari)
+					fact = False
+					if len(vari) > 0 and vari[0] == "!":
+						fact = True
+						vari = vari[1:len(vari)]
+					retu += vari
+					if fact == True:
+						retu += "!"
+					if self[a].expo[b] != 1:
+						retu += "^(" + str(self[a].expo[b]) + ")"
+					if b < len(self[a].vari) - 1:
+						retu += "*"
+				if a < len(self) - 1 and self[a + 1].valu >= 0.0:
+					retu += "+"
+		print(retu)
+
+#################################
+
+# MISC SOLVING
+
 # find the common integer that a LIST OF INTEGERS divides into
 def DenoComm(lis_):
 	lis_ = sorted(lis_)
@@ -786,7 +1331,7 @@ def Imag(ter1, ter2):
 # 	a += 1
 # a = 0
 # while a < end:
-# 	print(Pyth.Coun(baseList, a))
+# 	print(Math.Coun(baseList, a))
 # 	a += 1
 # this function can be used to continue the progress of an integer incrementing through nested loops that have different sizes
 def Coun(baseList, curr):

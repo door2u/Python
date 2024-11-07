@@ -187,6 +187,7 @@ def LogiActuDict(typ_ = ""):
 def Logi(sensOpti = {}, sensDict = {}, sensName = "", contOpti = {}, contDict = {}, contName = "", actuOpti = {}, actuDict = {}, actuName = ""):
 	import os
 	import bpy
+	Pyth = PythLink()
 	Blen = BlenLink()
 	if type(sensDict) == dict:
 		if sensDict == {}:
@@ -219,7 +220,18 @@ def Logi(sensOpti = {}, sensDict = {}, sensName = "", contOpti = {}, contDict = 
 			sensDictDefa = LogiSensDict(typ_ = sensType)
 			for key_ in sensDictDefa:
 				if key_ != 'type' and sensDict[key_] != sensDictDefa[key_]:
-					setattr(Sensors()[len(Sensors()) - 1], key_, sensDict[key_])
+					# TODO: update
+					#print(key_, sensDict[key_])
+					valu = sensDict[key_]
+					if type(sensDictDefa[key_]) == str:
+						valu = str(valu)
+					if type(sensDictDefa[key_]) == int:
+						valu = int(valu)
+					if type(sensDictDefa[key_]) == float:
+						valu = float(valu)
+					if type(sensDictDefa[key_]) == bool:
+						valu = Pyth.Bool(valu)
+					setattr(Sensors()[len(Sensors()) - 1], key_, valu)
 		if sensName != "" and sensType != "linkCont":
 			Sensors()[len(Sensors()) - 1].name = sensName			
 	if contType != "" and contType != "linkSens" and contType != "linkCont" and contType != "linkActu" and sensType != "linkCont":
@@ -239,9 +251,19 @@ def Logi(sensOpti = {}, sensDict = {}, sensName = "", contOpti = {}, contDict = 
 								done = True
 						if done == False:
 							bpy.ops.text.open(filepath = contDict[key_])
-							Controllers()[len(Controllers()) - 1].text = bpy.data.texts[name]
+						# TODO: this is meant to be the last controller added but might not neccessarily be
+						Controllers()[len(Controllers()) - 1].text = bpy.data.texts[name]
 					else:
-						setattr(Controllers()[len(Controllers()) - 1], key_, contDict[key_])
+						valu = contDict[key_]
+						if type(contDictDefa[key_]) == str:
+							valu = str(valu)
+						if type(contDictDefa[key_]) == int:
+							valu = int(valu)
+						if type(contDictDefa[key_]) == float:
+							valu = float(valu)
+						if type(contDictDefa[key_]) == bool:
+							valu = Pyth.Bool(valu)
+						setattr(Controllers()[len(Controllers()) - 1], key_, valu)
 							
 		if contName != "" and contType != "linkSens" and contType != "linkActu":
 			Controllers()[len(Controllers()) - 1].name = contName
@@ -266,7 +288,16 @@ def Logi(sensOpti = {}, sensDict = {}, sensName = "", contOpti = {}, contDict = 
 							bpy.ops.sound.open(filepath = actuDict[key_])
 						Actuators()[len(Actuators()) - 1].sound = bpy.data.sounds[name]
 					else:
-						setattr(Actuators()[len(Actuators()) - 1], key_, actuDict[key_])
+						valu = actuDict[key_]
+						if type(actuDictDefa[key_]) == str:
+							valu = str(valu)
+						if type(actuDictDefa[key_]) == int:
+							valu = int(valu)
+						if type(actuDictDefa[key_]) == float:
+							valu = float(valu)
+						if type(actuDictDefa[key_]) == bool:
+							valu = Pyth.Bool(valu)
+						setattr(Actuators()[len(Actuators()) - 1], key_, valu)
 		if actuName != "" and actuType != "linkCont":
 			Actuators()[len(Actuators()) - 1].name = actuName
 	sensLink = len(Controllers()) - 1
@@ -1726,10 +1757,10 @@ def Ray_(pref = "obst"):
 		if a < len(line):
 			poly = line[a]
 		a += 1
-		stat = Pyth.StriTo__Bool(stat)
+		stat = Pyth.Bool(stat)
 		room = int(room)
-		boun = Pyth.StriTo__Bool(boun)
-		bounOnly = Pyth.StriTo__Bool(bounOnly)
+		boun = Pyth.Bool(boun)
+		bounOnly = Pyth.Bool(bounOnly)
 		verb = StriListTo__Tupl(verb)
 		cenb = StriListTo__Tupl(cenb)
 		norb = StriListTo__Tupl(norb)

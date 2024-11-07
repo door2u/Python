@@ -5,6 +5,49 @@ def Swap(firs, seco):
 	seco = temp
 	return firs, seco
 
+# TODO: maybe return in nests to avoid creating a return var
+def Stri(stri, star = None, stop = None):
+	retu = ""
+	if star != None:
+		if stop == None:
+			if star < len(stri) and star >= 0 and len(stri) > 0:
+				retu = stri[star]
+		else:
+			if stop < len(stri) and stop >= 0 and len(stri) > 0:
+				retu = stri[star:stop]
+				#retu = stri[0:1]
+	else:
+		if type(stri) == str:
+			retu = stri
+	return retu
+
+# in the list, does chec exist
+def Exis(lis_, chec, inde = False):
+	retu = False
+	a = 0
+	while a < len(lis_):
+		if lis_[a] == chec:
+			retu = True
+			break
+		a += 1
+	if inde:
+		retu = [retu, a]
+	return retu
+
+def Whit(stri):
+	for repl in [" ", "\t", "\n"]: stri = stri.replace(repl, "")
+	return stri
+
+# add an integer key for each entry in a dictionary
+def DictInte(dic_):
+	dictList = []
+	for key_ in dic_:
+		dictList.append([key_, dic_[key_]])
+	dictList = sorted(dictList)
+	for a in range(len(dictList)):
+		dic_.update({a:dictList[a][1]})
+	return dic_
+
 #######################
 
 # read from a FILE. STRIP LINES
@@ -36,12 +79,15 @@ def FileName(path):
 
 #######################
 
-# convert a STRING to a bool
-def StriTo__Bool(stri):
+# TODO: update
+# convert a VALUE to a bool
+def Bool(valu):
 	retu = False
-	if len(stri) > 0:
-		if stri[0] == "T" or stri[0] == "t" or stri[0] == "1":
-			valu = True
+	valu = str(valu)
+	if len(valu) > 0:
+		valu = valu[0]
+		if valu == "T" or valu == "t" or (valu.isdigit() and valu != "0"):
+			retu = True
 	return retu
 
 # convert a STRING to a tuple
@@ -71,6 +117,7 @@ def StriListTo__Tupl(striList, cast = "f"):
 	return retu
 """
 
+#"""
 def StriListTo__Tupl(striList, cast = "f"):
 	retu = []
 	#striList = 
@@ -92,21 +139,26 @@ def StriListTo__Tupl(striList, cast = "f"):
 		retu[a] = StriTo__Tupl(retu[a], cast = cast)
 		a += 1
 	return retu
+#"""
 
-"""
-# TODO: this might not be needed if there aren't any scripts that depend on it
-def TuplListTo__Stri(list):
+#"""
+# TODO:
+# this prepares a tuple for export to a list
+# where is the next function used
+def TuplListExpo(list):
 	retu = []
 	for a in range(len(list)):
 		retu.append(str(list[a]))
 	return retu
-"""
+#"""
 
+#"""
 def TuplListTo__Stri(list, remoBrac = True):
 	retu = str(list)
 	if remoBrac == True:
 		retu = retu[1:len(retu) - 1]
 	return retu
+#"""
 
 def StriListTo__Int_List(stri):
 	stri = stri.replace("[", "")
@@ -346,7 +398,7 @@ def LineTo__Dict(line, conf = 1):
 			elif typ_ == "<class 'int'>":
 				valu = int(valu)
 			elif typ_ == "<class 'bool'>":
-				valu = StriTo__Bool(valu)
+				valu = Bool(valu)
 			elif typ_ == "<class 'tuple'>":
 				valu = StriTo__Tupl(valu)
 			a += 3
@@ -369,7 +421,7 @@ def LineTo__Dict(line, conf = 1):
 							elif typ_ == "int":
 								line[a] = int(line[a])
 							elif typ_ == "bool":
-								line[a] = StriTo__Bool(line[a])
+								line[a] = Bool(line[a])
 							elif typ_ == "tuple":
 								line[a] = StriTo__Tupl(line[a])
 							valu.append(line[a])

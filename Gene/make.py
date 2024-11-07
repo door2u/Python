@@ -28,7 +28,8 @@ def main():
 		#scriList = [Gene.Tree()]
 		#scriList = [Gene.TreeSimp()]
 		#scriList = [Gene.Pose()]
-		scriList = [Gene.Anim()]
+		#scriList = [Gene.Anim()]
+		scriList = [Gene.Jog_()]
 
 		Gene.Make(scriList = scriList, fileCoun = fileCoun, incr = incr, rend = rend)
 

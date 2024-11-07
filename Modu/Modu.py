@@ -79,10 +79,12 @@ spec.loader.exec_module(Gene)
 
 # FUNCTIONS
 
+# TODO: update
 # append header for a python expression
 def Head():
 	#return "import importlib.util\nimport os\npath = os.path.expanduser(\\\"~\\\") + os.sep\nif os.name == \\\'nt\\\':\n\tpath += \\\"OneDrive\\\" + os.sep\npath += \\\"Documents\\\" + os.sep + \\\"prog\\\" + os.sep + \\\"Modu\\\" + os.sep + \\\"Modu.py\\\"\nspec = importlib.util.spec_from_file_location(\\\"Modu\\\", path)\nModu = importlib.util.module_from_spec(spec)\nspec.loader.exec_module(Modu)\nPyth = Modu.Pyth\nMath = Modu.Math\nBlen = Modu.Blen\nBlenGame = Modu.BlenGame\nGene = Modu.Gene\n"
-	return "import importlib.util\nimport os\npath = os.path.expanduser(\"~\") + os.sep\nif os.name == \'nt\':\n\tpath += \"OneDrive\" + os.sep\npath += \"Documents\" + os.sep + \"prog\" + os.sep + \"Modu\" + os.sep + \"Modu.py\"\nspec = importlib.util.spec_from_file_location(\"Modu\", path)\nModu = importlib.util.module_from_spec(spec)\nspec.loader.exec_module(Modu)\nPyth = Modu.Pyth\nMath = Modu.Math\nBlen = Modu.Blen\nBlenGame = Modu.BlenGame\nGene = Modu.Gene\n"
+	#return "import importlib.util\nimport os\npath = os.path.expanduser(\"~\") + os.sep\nif os.name == \'nt\':\n\tpath += \"OneDrive\" + os.sep\npath += \"Documents\" + os.sep + \"prog\" + os.sep + \"Modu\" + os.sep + \"Modu.py\"\nspec = importlib.util.spec_from_file_location(\"Modu\", path)\nModu = importlib.util.module_from_spec(spec)\nspec.loader.exec_module(Modu)\nPyth = Modu.Pyth\nMath = Modu.Math\nBlen = Modu.Blen\nBlenGame = Modu.BlenGame\nGene = Modu.Gene\n"
+	return "import importlib.util\nimport os\npath = os.path.expanduser(\"~\") + os.sep\npath += \"Documents\" + os.sep + \"prog\" + os.sep + \"Modu\" + os.sep + \"Modu.py\"\nspec = importlib.util.spec_from_file_location(\"Modu\", path)\nModu = importlib.util.module_from_spec(spec)\nspec.loader.exec_module(Modu)\nPyth = Modu.Pyth\nMath = Modu.Math\nBlen = Modu.Blen\nBlenGame = Modu.BlenGame\nGene = Modu.Gene\n"
 
 #################################
 
@@ -90,6 +92,7 @@ def Head():
 
 Blen.PythLink = functools.partial(Blen.PythLink, Pyth = Pyth)
 Blen.MathLink = functools.partial(Blen.MathLink, Math = Math)
+Blen.BlenGameLink = functools.partial(Blen.BlenGameLink, BlenGame = BlenGame)
 Blen.HeadLink = functools.partial(Blen.HeadLink, Head = Head)
 Blen.BlenCommLink = functools.partial(Blen.BlenCommLink, blenComm = blenComm)
 Blen.BlenDireLink = functools.partial(Blen.BlenDireLink, blenDire = blenDire)
