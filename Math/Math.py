@@ -33,7 +33,7 @@ def AnglGrea(ang1, ang2):
 
 #################################
 
-# VECTO
+# VECTOR FUNCTIONS
 
 def VectDot_(vec1, vec2):
 	retu = 0.0
@@ -182,8 +182,8 @@ def VectSame(vec1, vec2, tole = 0.0001):
 def VectInve(vect):
 	return tuple(VectScal(vect, -1.0))
 
-# convert an euler rotation to a vector
-# assumes object originated at +x
+# convert a vector to an euler rotation
+# assumes object was originally oriented towards +x
 # TODO: too many cases
 def VectTo__Eule3d__(vect):
 	import math
@@ -198,7 +198,9 @@ def VectTo__Eule3d__(vect):
 			x2 = vect[0]
 		y = math.atan2(-vect[2], x2)
 	else:
-		if math.fabs(vect[1]) >= 0.0:
+		# TODO: when did this get messed up
+		#if math.fabs(vect[1]) >= 0.0:
+		if vect[1] > 0.0:
 			y = math.atan2(-vect[2], vect[1])
 		else:
 			y = math.atan2(-vect[2], -vect[1])

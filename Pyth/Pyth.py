@@ -117,7 +117,6 @@ def StriListTo__Tupl(striList, cast = "f"):
 	return retu
 """
 
-#"""
 def StriListTo__Tupl(striList, cast = "f"):
 	retu = []
 	#striList = 
@@ -139,26 +138,20 @@ def StriListTo__Tupl(striList, cast = "f"):
 		retu[a] = StriTo__Tupl(retu[a], cast = cast)
 		a += 1
 	return retu
-#"""
 
-#"""
 # TODO:
-# this prepares a tuple for export to a list
-# where is the next function used
+# this prepares a tuple for export to a list. where is the next function used
 def TuplListExpo(list):
 	retu = []
 	for a in range(len(list)):
 		retu.append(str(list[a]))
 	return retu
-#"""
 
-#"""
 def TuplListTo__Stri(list, remoBrac = True):
 	retu = str(list)
 	if remoBrac == True:
 		retu = retu[1:len(retu) - 1]
 	return retu
-#"""
 
 def StriListTo__Int_List(stri):
 	stri = stri.replace("[", "")

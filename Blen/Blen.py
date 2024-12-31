@@ -325,7 +325,7 @@ def Edit():
 	bpy.ops.object.editmode_toggle()
 
 # select the indices of the vertices in a VERTEX LIST (list of integers)
-def VertSele(vert):
+def VertSele(vert, dese = True):
 	import bpy
 	# backup current context
 	name = bpy.context.object.name
@@ -337,7 +337,8 @@ def VertSele(vert):
 	# reselect the object
 	Sele(name)
 	# deselect all verts
-	VertDese()
+	if dese:
+		VertDese()
 	# select the group created above
 	VertGrouSele("temp")
 	# delete the group
@@ -360,9 +361,9 @@ def VertDese():
 	Edit()
 
 # select the polygon of the given INDEX
-def PolySele(inde):
+def PolySele(inde, dese = True):
 	import bpy
-	VertSele(PolyVert(inde))
+	VertSele(PolyVert(inde), dese = dese)
 
 def VertDele():
 	import bpy
