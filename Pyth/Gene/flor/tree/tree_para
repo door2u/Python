@@ -1,0 +1,66 @@
+<class 'float'>
+heig_mini
+4.0
+<class 'float'>
+heig_maxi
+10.0
+<class 'float'>
+prob_mini
+0.5
+<class 'float'>
+prob_maxi
+0.9
+<class 'float'>
+randAngl_mini
+0.0
+<class 'float'>
+randAngl_maxi
+5.0
+<class 'float'>
+vertRandDivi_mini
+0.2
+<class 'float'>
+vertRandDivi_maxi
+0.8
+<class 'float'>
+branLengDivi_mini
+0.5
+<class 'float'>
+branLengDivi_maxi
+0.8
+<class 'float'>
+probDecr_mini
+0.5
+<class 'float'>
+probDecr_maxi
+0.9
+<class 'float'>
+spre_mini
+0.0
+<class 'float'>
+spre_maxi
+90.0
+<class 'float'>
+midp_mini
+0.2
+<class 'float'>
+midp_maxi
+0.8
+<class 'float'>
+anglInit_mini
+0.0
+<class 'float'>
+anglInit_maxi
+60.0
+<class 'float'>
+magnDecr_mini
+0.91
+<class 'float'>
+magnDecr_maxi
+0.95
+<class 'float'>
+line_mini
+0.0
+<class 'float'>
+line_maxi
+1.0
