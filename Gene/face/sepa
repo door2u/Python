@@ -1,0 +1,27 @@
+
+	# index 0: name of the vertex group
+	# other indices: names of vertex groups that border the vertex group
+	overlap_ = []
+	overlap_.append(["neck", "chin", "jaw"])
+	overlap_.append(["chin", "neck", "jaw", "mouth", "cheeks_lower"])
+	overlap_.append(["jaw", "neck", "chin", "mouth"])
+	overlap_.append(["mouth", "lips", "jaw", "nose", "cheeks_lower"])
+	overlap_.append(["lips", "mouth"])
+	overlap_.append(["cheeks_lower", "cheeks_upper", "nose", "jaw"])
+	overlap_.append(["cheeks_upper", "cheeks_lower", "nose", "eyesockets", "brow"])
+	overlap_.append(["nose", "eyesockets", "mouth", "cheeks_lower", "cheeks_upper"])
+	overlap_.append(["eyesockets", "eyes", "nose", "brow", "cheeks_upper"])
+	overlap_.append(["eyes", "eyesockets"])
+	overlap_.append(["brow", "eyesockets", "nose", "cheeks_upper", "forehead"])
+	overlap_.append(["forehead", "brow"])
+	# duplicate mesh
+	Blen.Sele("face")
+	Blen.Dupl()
+	### get a section
+	Blen.VertDese()
+	Blen.VertGrouSele(overlap_[grou][0])
+	Blen.Edit()
+	bpy.ops.mesh.select_all(action='INVERT')
+	Blen.Edit()
+	Blen.VertDele()
+
